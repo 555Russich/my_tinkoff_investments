@@ -1,4 +1,3 @@
-# from main import Hola
 from tinkoff.invest import Client, RequestError
 # from api_tokens import read_txt_tokens
 from src.token_manager import TokenManager
