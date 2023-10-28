@@ -18,9 +18,9 @@ async def get_highest_dividends_shares():
     ru_shares_with_dividends = [
         share for share in shares
         if share.div_yield_flag and
-           share.country_of_risk == 'RU' and
-           share.currency == 'rub' and
-           not share.for_qual_investor_flag
+        share.country_of_risk == 'RU' and
+        share.currency == 'rub' and
+        not share.for_qual_investor_flag
     ]
 
     best_shares_by_divs = []

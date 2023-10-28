@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta
 
 from tinkoff.invest import (
@@ -6,6 +7,8 @@ from tinkoff.invest import (
     Share,
     Dividend,
     CandleInstrument,
+    InstrumentIdType,
+    Instrument,
 
     MarketDataRequest,
     SubscriptionAction,
@@ -24,12 +27,12 @@ from grpc import StatusCode
 
 from src.my_logging import log_and_exit
 from src.token_manager import token_controller
-from src.schemas import MyHistoricCandle
+from src.schemas import Candle, TempCandles
 from src.converter import Converter
 from src.exceptions import ResourceExhausted
 
 
-@token_controller
+@token_controller()
 async def get_candles(
         figi: str,
         from_: datetime,
@@ -37,11 +40,11 @@ async def get_candles(
         interval: CandleInterval = CandleInterval.CANDLE_INTERVAL_1_MIN,
         delta: timedelta = timedelta(days=1),
         client: AsyncServices = None
-) -> list[MyHistoricCandle]:
+) -> list[Candle]:
     candles = []
     while True:
         to_temp = from_ + delta
-        # logging.info(f'{from_} , {to_temp}, {to}')
+        logging.info(f'{len(candles)=} | {from_} | {to_temp} | {to}')
         try:
             r = await client.market_data.get_candles(
                 figi=figi, interval=interval,
@@ -50,7 +53,11 @@ async def get_candles(
             candles += [Converter.candle(candle) for candle in r.candles]
         except AioRequestError as ex:
             if ex.code == StatusCode.RESOURCE_EXHAUSTED:
-                raise ResourceExhausted(candles, (from_, to))
+                temp_candles = TempCandles(candles=candles, from_=from_, to=to)
+                raise ResourceExhausted(temp_candles)
+            elif ex.code == StatusCode.UNAVAILABLE:
+                logging.warning(ex, exc_info=True)
+                continue
             else:
                 log_and_exit(ex)
         except Exception as ex:
@@ -61,12 +68,12 @@ async def get_candles(
             return candles
 
 
-@token_controller
+@token_controller()
 async def get_shares(client: AsyncServices = None) -> list[Share]:
     return (await client.instruments.shares()).instruments
 
 
-@token_controller
+@token_controller()
 async def get_dividends(
         figi: str,
         from_: datetime,
@@ -74,6 +81,19 @@ async def get_dividends(
         client: AsyncServices = None
 ) -> list[Dividend]:
     return (await client.instruments.get_dividends(figi=figi, from_=from_, to=to)).dividends
+
+
+@token_controller(single_response=True)
+async def get_instrument_by(
+        id: str,
+        id_type: InstrumentIdType,
+        class_code: str = None,
+        client: AsyncServices = None
+) -> Instrument:
+    if id_type == InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER:
+        assert class_code
+
+    return (await client.instruments.get_instrument_by(id_type=id_type, id=id)).instrument
 
 
 async def _request_iterator(

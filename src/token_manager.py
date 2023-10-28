@@ -1,39 +1,39 @@
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Callable
 
 from tinkoff.invest import AsyncClient
 
 from config import cfg
 from src.exceptions import ResourceExhausted
-from src.singletone import Singleton
+from src.date_utils import DateTimeFactory, is_minute_passed
+from src.schemas import TempCandles
 
 
-class TokenManager(Singleton):
-    _tokens_list = cfg.TOKENS_READ + cfg.TOKENS_FULL_ACCESS
-    _tokens = {t: True for t in _tokens_list}
-    _dt_last_get: datetime = datetime.now()
+class TokenManager:
+    _tokens = {t: True for t in cfg.TOKENS_FULL_ACCESS + cfg.TOKENS_READ_ONLY}
+    _dt: datetime | None = None
+
+    @classmethod
+    def list_all(cls) -> list[str]:
+        return list(cls._tokens.keys())
 
     @classmethod
     async def get(cls):
+        assert len(cls.list_all()) > 0
         token = None
 
-        if is_minute_passed(cls._dt_last_get):
-            for t in cls._tokens.keys():
-                if token is None:
-                    token = t
-                    # cls._tokens[token] = False
-                else:
-                    cls._tokens[t] = True
-        else:
-            for t, is_free in cls._tokens.items():
-                if is_free:
-                    token = t
-                    # cls._tokens[token] = False
-                    break
+        if cls._dt and is_minute_passed(cls._dt):
+            cls._refresh()
 
-        cls._dt_last_get = datetime.now()
+        for t, is_free in cls._tokens.items():
+            if is_free:
+                token = t
+                break
+
+        cls._dt = DateTimeFactory.now()
 
         if token:
             return token
@@ -44,32 +44,39 @@ class TokenManager(Singleton):
             return await cls.get()
 
     @classmethod
+    def set_busy_flag(cls, token: str) -> None:
+        cls._tokens[token] = False
+
+    @classmethod
     def _refresh(cls):
         for t in cls._tokens.keys():
             cls._tokens[t] = True
 
-    def _background_refresher(self):
-        while True:
-            self._refresh()
-            print('refreshed')
-            time.sleep(60 - int(time.strftime('%S')))
 
+def token_controller(dummy=None, single_response: bool = False) -> Callable:
+    def wrapper_1(func):
+        async def wrapper_2(*args, **kwargs):
+            out = []
+            while True:
+                t = await TokenManager.get()
+                async with AsyncClient(t) as client:
+                    try:
+                        if single_response:
+                            return await func(client=client, *args, **kwargs)
+                        else:
+                            return out + await func(client=client, *args, **kwargs)
+                    except ResourceExhausted as e:
+                        TokenManager.set_busy_flag(t)
 
-def token_controller(func):
-    async def wrapper(*args, **kwargs):
-        out = []
-        while True:
-            t = await TokenManager.get()
-            async with AsyncClient(t) as client:
-                try:
-                    return out + await func(client=client, *args, **kwargs)
-                except ResourceExhausted as e:
-                    out += e.data[1]
-                    kwargs['from_'], kwargs['to'] = e.data[2]
-                    print(f'from_={e.data[2][0]} ; to={e.data[2][1]}')
-    return wrapper
+                        if isinstance(e.data, TempCandles):
+                            out += e.data.candles
+                            kwargs['from_'], kwargs['to'] = e.data.from_, e.data.to
+                            logging.info(f'from_={e.data.from_} ; to={e.data.to}')
+                    except Exception:
+                        raise
+        return wrapper_2
 
-
-def is_minute_passed(old_dt: datetime) -> bool:
-    dt_now = datetime.now()
-    return dt_now - old_dt > timedelta(minutes=1) or dt_now.minute != old_dt.minute
+    if callable(dummy):
+        wrapper_1(dummy)
+    else:
+        return wrapper_1

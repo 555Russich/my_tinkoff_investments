@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from tinkoff.invest.schemas import Quotation, HistoricCandle
 from tinkoff.invest.utils import now
 
-from src.schemas import MyHistoricCandle
+from src.schemas import Candle
 
 
 class Converter:
@@ -17,8 +17,8 @@ class Converter:
         return Quotation(int(units), int(nano * 10 ** 9))
 
     @staticmethod
-    def candle(candle: HistoricCandle) -> MyHistoricCandle:
-        return MyHistoricCandle(
+    def candle(candle: HistoricCandle) -> Candle:
+        return Candle(
             Converter.quotation_to_decimal(candle.open),
             Converter.quotation_to_decimal(candle.high),
             Converter.quotation_to_decimal(candle.low),

@@ -1,0 +1,70 @@
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+
+TZ_MOSCOW = ZoneInfo('Europe/Moscow')
+TZ_UTC = ZoneInfo('UTC')
+
+
+class DateTimeFactory:
+    BUG_1DAY_CANDLE_DATE = datetime(year=1970, month=1, day=1, tzinfo=TZ_UTC)
+
+    @classmethod
+    def now(cls) -> datetime:
+        return datetime.now(tz=TZ_UTC)
+
+
+class BaseDateTimeFormatter(ABC):
+    @property
+    @abstractmethod
+    def _TZ(self) -> ZoneInfo:
+        ...
+
+    @property
+    @abstractmethod
+    def _date_format(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
+    def _time_format(self) -> str:
+        return ''
+
+    @property
+    def _datetime_format(self) -> str:
+        return ' '.join([self._date_format, self._time_format])
+
+    def date_strf(self, v: datetime) -> str:
+        return v.strftime(self._date_format)
+
+    def time_strf(self, v: datetime) -> str:
+        return v.strftime(self._time_format)
+
+    def datetime_strf(self, v: datetime) -> str:
+        return v.strftime(self._datetime_format)
+
+    def date_strp(self, v: str) -> datetime:
+        return datetime.strptime(v, self._date_format)
+
+    def time_strp(self, v: str) -> datetime:
+        return datetime.strptime(v, self._time_format).replace(tzinfo=self._TZ)
+
+    def datetime_strp(self, v: str) -> datetime:
+        return datetime.strptime(v, self._datetime_format).replace(tzinfo=self._TZ)
+
+
+class SystemDateTimeFormatter(BaseDateTimeFormatter):
+    _TZ = TZ_UTC
+    _date_format = '%d.%m.%Y'
+    _time_format = '%H:%M:%S'
+
+
+dtf = SystemDateTimeFormatter()
+
+
+def is_minute_passed(old_dt: datetime) -> bool:
+    dt_now = DateTimeFactory.now()
+    return dt_now - old_dt > timedelta(minutes=1) or dt_now.minute != old_dt.minute
+
+

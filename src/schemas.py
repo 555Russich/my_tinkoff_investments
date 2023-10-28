@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from tinkoff.invest import (
-    Share,
-    Dividend
-)
+from tinkoff.invest import Instrument
 
 
 @dataclass(frozen=True)
-class MyHistoricCandle:
+class Candle:
     open: float
     high: float
     low: float
@@ -18,8 +15,15 @@ class MyHistoricCandle:
     is_complete: bool | None = None
 
 
+@dataclass(frozen=True)
+class TempCandles:
+    candles: list[Candle]
+    from_: datetime
+    to: datetime
+
+
 @dataclass(frozen=True, init=False)
-class StatusHistoryInCSV:
+class CSVCandlesStatus:
     UNDEFINED = -1
     OK = 0
     NOT_EXISTS = 1
@@ -38,10 +42,8 @@ class TradeSignalType:
 
 
 @dataclass
-class DivShare:
-    share: Share
-    dividends: list[Dividend]
-
-    @property
-    def last_payment_date(self) -> datetime:
-        ...
+class StrategyResult:
+    instrument: Instrument | None = None
+    percent: float = 0
+    count_deals: int = 0
+    count_successful_deals: int = 0
