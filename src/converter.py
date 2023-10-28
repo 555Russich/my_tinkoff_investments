@@ -1,7 +1,4 @@
-from datetime import datetime, timezone, timedelta
-
 from tinkoff.invest.schemas import Quotation, HistoricCandle
-from tinkoff.invest.utils import now
 
 from src.schemas import Candle
 
@@ -27,18 +24,3 @@ class Converter:
             candle.time,
             candle.is_complete
         )
-
-    @staticmethod
-    def str2dt(dt: str) -> datetime:
-        return datetime.strptime(dt, '%d.%m.%y').replace(tzinfo=timezone.utc)
-
-    @staticmethod
-    def input_daterange(
-            look_days_back: int = None,
-            from_: str = None,
-            to: str = None
-    ) -> tuple[datetime, datetime]:
-        if look_days_back:
-            to = now()
-            return to - timedelta(days=look_days_back), to
-        return Converter.str2dt(from_), Converter.str2dt(to)

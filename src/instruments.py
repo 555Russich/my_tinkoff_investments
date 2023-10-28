@@ -10,7 +10,6 @@ from src.my_logging import get_logger
 from src.token_manager import TokenManager
 from src.converter import Converter
 from src.api_calls import get_shares, get_instrument_by
-from src.helpers import to_json_serializable
 
 
 class Instruments:
