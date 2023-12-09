@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+ISO_FORMAT = '%Y-%m-%d %H:%M:%S%z'
 
 TZ_MOSCOW = ZoneInfo('Europe/Moscow')
 TZ_UTC = ZoneInfo('UTC')
@@ -13,6 +14,10 @@ class DateTimeFactory:
     @classmethod
     def now(cls) -> datetime:
         return datetime.now(tz=TZ_UTC)
+
+    @classmethod
+    def replace_time(cls, dt: datetime) -> datetime:
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 class BaseDateTimeFormatter(ABC):
@@ -60,7 +65,15 @@ class SystemDateTimeFormatter(BaseDateTimeFormatter):
     _time_format = '%H:%M:%S'
 
 
-dtf = SystemDateTimeFormatter()
+class ISODateTimeFormatter(BaseDateTimeFormatter):
+    _TZ = TZ_UTC
+    _date_format, _time_format = ISO_FORMAT.split()
+
+
+dt_form_sys = SystemDateTimeFormatter()
+dt_form_iso = ISODateTimeFormatter()
+dt_form_msc = SystemDateTimeFormatter()
+dt_form_msc._TZ = TZ_MOSCOW
 
 
 def is_minute_passed(old_dt: datetime) -> bool:

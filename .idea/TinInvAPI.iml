@@ -14,7 +14,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../Trading USA/html" />
       <excludeFolder url="file://$MODULE_DIR$/../Trading USA/json" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (TinInvAPI_venv)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

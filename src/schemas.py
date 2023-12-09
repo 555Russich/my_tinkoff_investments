@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
+from collections import UserList
 
 from tinkoff.invest import Instrument
+# import pandas as pd
 
 
 @dataclass(frozen=True)
@@ -15,11 +17,12 @@ class Candle:
     is_complete: bool | None = None
 
 
-@dataclass(frozen=True)
-class TempCandles:
-    candles: list[Candle]
-    from_: datetime
-    to: datetime
+class Candles(UserList[Candle]):
+    # def df(self) -> pd.DataFrame:
+    #     df = pd.DataFrame([{k.capitalize(): v for k, v in c.__dict__.items()} for c in self])
+    #     #df['Time'] = pd.DatetimeIndex(df['Time'])
+        # return df
+    pass
 
 
 @dataclass(frozen=True, init=False)
@@ -47,3 +50,4 @@ class StrategyResult:
     percent: float = 0
     count_deals: int = 0
     count_successful_deals: int = 0
+

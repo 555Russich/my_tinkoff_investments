@@ -3,142 +3,119 @@ import logging
 from datetime import datetime, timedelta
 
 from tinkoff.invest import (
+    Instrument,
     InstrumentIdType,
     CandleInterval,
     TradeDirection
 )
+import backtrader as bt
 
 from config import FILEPATH_LOGGER
-from src.schemas import Candle, StrategyResult
 from src.my_logging import get_logger
-from src.date_utils import DateTimeFactory, dtf
-from src.api_calls import (
-    get_instrument_by,
-    get_shares
-)
-from src.market_data import get_or_read_candles
+from src.date_utils import DateTimeFactory, dt_form_sys, dt_form_msc
+from src.api_calls.instruments import get_instrument_by
+from src.csv_candles import CSVCandles
+from src.backtrader.csv_data import MyCSVData
 
 get_logger(FILEPATH_LOGGER)
-
 TO = DateTimeFactory.now()
 FROM = TO - timedelta(days=365*5)
 MIN_CANDLES_COUNT = 300
 MIN_COUNT_DAYS_IN_A_ROW = 8
-logging.info(f'from: {dtf.datetime_strf(FROM)} | to: {dtf.datetime_strf(TO)}')
+logging.info(f'from: {dt_form_sys.datetime_strf(FROM)} | to: {dt_form_sys.datetime_strf(TO)}')
 
 
-class StrategyLongTrendBreakDown:
-    def __init__(self, candles: list[Candle], min_count_days_in_a_row: int):
-        self._candles = candles
-        self._min_count_days_in_a_row = min_count_days_in_a_row
-        self._counter_days: int = 0
-        self._direction = TradeDirection.TRADE_DIRECTION_UNSPECIFIED
-        self._signal_direction = TradeDirection.TRADE_DIRECTION_UNSPECIFIED
-        self._result_of_deals: list[float] = []
+class StrategyLongTrendBreakDown(bt.Strategy):
+    def __init__(self):
+        self.order = None
+        self.closes = self.datas[0].close
+        self.opens = self.datas[0].open
+        self.highs = self.datas[0].high
+        self.lows = self.datas[0].low
 
-    def backtest(self) -> list[float]:
-        for candle in self._candles:
-            if self._signal_direction != TradeDirection.TRADE_DIRECTION_UNSPECIFIED:
-                self.get_deal_result(candle)
-                self._signal_direction = TradeDirection.TRADE_DIRECTION_UNSPECIFIED
+        self.changes = self.closes > self.opens
+        self.min_count_bars_in_a_row = MIN_COUNT_DAYS_IN_A_ROW
 
-            if candle.close - candle.open > 0:
-                self.recognize_trade_signal(candle, TradeDirection.TRADE_DIRECTION_BUY)
-            elif candle.close - candle.open < 0:
-                self.recognize_trade_signal(candle, TradeDirection.TRADE_DIRECTION_SELL)
-            else:
-                continue
-        return self._result_of_deals
+    def log(self, txt: str, dt: datetime | None = None):
+        if dt is None:
+            dt = self.datas[0].datetime.datetime(0)
 
-    def recognize_trade_signal(self, candle: Candle, direction: TradeDirection) -> None:
-        opposite_direction = self.get_opposite_direction(direction)
+        dt = dt_form_sys.datetime_strf(dt)
+        logging.info(f'{{{dt}}} {{{txt}}}')
 
-        if self._direction == TradeDirection.TRADE_DIRECTION_UNSPECIFIED:
-            self._counter_days += 1
-            self._direction = direction
-        elif self._direction == direction:
-            self._counter_days += 1
-        elif self._direction == opposite_direction:
-            if self._counter_days >= self._min_count_days_in_a_row:
-                # logging.info(f'{direction=} | {self._counter_days=} | {dtf.datetime_strf(candle.time)}')
-                self._signal_direction = direction
+    def notify_order(self, order: bt.Order):
+        if order.status in [order.Submitted, order.Accepted]:
+            # Buy/Sell order submitted/accepted to/by broker - Nothing to do
+            return
 
-            self._counter_days = 1
-            self._direction = direction
+        # Check if an order has been completed
+        # Attention: broker could reject order if not enough cash
+        if order.status == order.Completed:
+            if order.isbuy():
+                self.log(f'Buy executed | Price={order.executed.price} | Cost={order.executed.value} | '
+                         f'Comm={order.executed.comm}')
+            elif order.issell():
+                self.log(f'Sell executed | Price={order.executed.price} | Cost={order.executed.value} | '
+                         f'Comm={order.executed.comm}')
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log(f'Order canceled/margin/rejected')
 
-    def get_deal_result(self, candle: Candle) -> None:
-        if self._signal_direction == TradeDirection.TRADE_DIRECTION_BUY:
-            # price1 = candle.high - (candle.high - candle.low)/4
-            price1 = candle.open
-            price2 = candle.close
-            res = price2 - price1
-        elif self._signal_direction == TradeDirection.TRADE_DIRECTION_SELL:
-            # price1 = candle.low + (candle.high - candle.low)/4
-            price1 = candle.open
-            price2 = candle.close
-            res = -(price2 - price1)
-        else:
-            raise Exception
+        # no pending order
+        self.order = None
 
-        percent = res / price1 * 100
-        self._result_of_deals.append(percent)
-        # logging.info(f'{price1=} | {price2=} | res={round(res, 2)} | percent={round(percent, 2)}%')
+    def notify_trade(self, trade: bt.Trade):
+        if trade.isclosed:
+            self.log(f'{trade.pnl=} | {trade.pnlcomm=}')
 
-    @staticmethod
-    def get_opposite_direction(direction: TradeDirection) -> TradeDirection:
-        if direction == TradeDirection.TRADE_DIRECTION_SELL:
-            return TradeDirection.TRADE_DIRECTION_BUY
-        elif direction == TradeDirection.TRADE_DIRECTION_BUY:
-            return TradeDirection.TRADE_DIRECTION_SELL
+    def next(self):
+        if self.order or len(self.closes) < self.min_count_bars_in_a_row:
+            return
+
+        if self.position:
+            if self.position.size < 0:
+                self.buy()
+            elif self.position.size > 0:
+                self.sell()
+            self.order = None
+
+        prev_bars = self.changes.get(ago=-1, size=self.min_count_bars_in_a_row)
+        if len(set(prev_bars)) == 1:
+            is_bully_trend, is_plus_change = bool(prev_bars[0]), bool(self.changes[0])
+            # self.log(f'{is_bully_trend=} | {is_plus_change=}')
+            if is_bully_trend is True and is_plus_change is False:
+                self.order = self.sell()
+            elif is_bully_trend is False and is_plus_change is True:
+                self.order = self.buy()
 
 
-async def backtest_one_instrument(figi: str) -> StrategyResult:
-    instrument = await get_instrument_by(id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_FIGI, id=figi)
-    candles = await get_or_read_candles(
+async def main():
+    instrument = await get_instrument_by(id='NVTK', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='TQBR')
+    candles = await CSVCandles.download_or_read(
         instrument=instrument,
-        from_=FROM,
+        from_=instrument.first_1day_candle_date,
+        # from_=FROM,
         to=TO,
         interval=CandleInterval.CANDLE_INTERVAL_DAY,
         delta=timedelta(days=365)
     )
-    if len(candles) < MIN_CANDLES_COUNT:
-        return StrategyResult()
+    for i in range(1, len(candles)):
+        if candles[i-1].time > candles[i].time:
+            raise Exception(f'{instrument.ticker=} | {candles[i-1].time=} | {candles[i].time=}')
 
-    strategy = StrategyLongTrendBreakDown(candles=candles, min_count_days_in_a_row=MIN_COUNT_DAYS_IN_A_ROW)
-    result_of_deals = strategy.backtest()
-    strategy_result = StrategyResult(
-        percent=sum(result_of_deals),
-        count_deals=len(result_of_deals),
-        count_successful_deals=len([x for x in result_of_deals if x > 0])
-    )
-    logging.info(f'#{instrument.ticker} | figi={instrument.figi} | result={round(strategy_result.percent, 2)}% |'
-                 f' {strategy_result.count_successful_deals}/{strategy_result.count_deals} deals in profit')
-    return strategy_result
+    cerebro = bt.Cerebro()
+    cerebro.broker.set_cash(100_000)
+    cerebro.broker.setcommission(.0005)
 
+    filepath = CSVCandles.get_filepath(instrument, interval=CandleInterval.CANDLE_INTERVAL_DAY)
+    data = MyCSVData(dataname=filepath, fromdate=FROM, todate=TO)
+    cerebro.adddata(data)
 
-async def backtest_multiple_instruments(figi_list: list[str]):
-    strategy_result = StrategyResult()
-    for figi in figi_list:
-        single_result = await backtest_one_instrument(figi)
-        strategy_result.percent += single_result.percent
-        strategy_result.count_deals += single_result.count_deals
-        strategy_result.count_successful_deals += single_result.count_successful_deals
+    cerebro.addstrategy(StrategyLongTrendBreakDown)
 
-    logging.info(f'Tested {len(figi_list)} instruments\n{strategy_result}')
-
-
-async def main():
-    instruments_to_backtest = [s.figi for s in await get_shares()
-                               if s.first_1day_candle_date != DateTimeFactory.BUG_1DAY_CANDLE_DATE]
-    # instruments_to_backtest = []
-    # shares = await get_shares()
-    # for share in shares:
-    #     if share.ticker in ['AFKS', 'AFLT', 'AGRO', 'ALRS', 'CBOM', 'CHMF', 'ENPG', 'FEES', 'FIVE', 'GAZP', 'GLTR', 'GMKN', 'HYDR', 'IRAO', 'LKOH', 'MAGN', 'MGNT', 'MOEX', 'MTSS', 'NLMK', 'NVTK', 'OZON', 'PHOR', 'PIKK', 'PLZL', 'POLY', 'POSI', 'QIWI', 'ROSN', 'RTKM', 'RUAL', 'SBER', 'SBERP', 'SELG', 'SGZH', 'SNGS', 'SNGSP', 'TATN', 'TATNP', 'TCSG', 'TRNFP', 'UPRO', 'VKCO', 'VTBR', 'YNDX']:
-    #         if share.ticker not in ['VKCO'] or share.first_1day_candle_date != DateTimeFactory.BUG_1DAY_CANDLE_DATE:
-    #             instruments_to_backtest.append(share.figi)
-
-    await backtest_multiple_instruments(instruments_to_backtest)
-    # await backtest_one_instrument('BBG009GSYN76')
+    logging.info(f'Starting Portfolio Value: {cerebro.broker.get_value()}')
+    cerebro.run(notidy_order=True)
+    logging.info(f'Final Portfolio Value: {cerebro.broker.get_value()}')
+    # cerebro.plot(style='candlestick')
 
 
 if __name__ == '__main__':

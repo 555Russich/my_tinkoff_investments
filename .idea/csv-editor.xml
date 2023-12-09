@@ -10,6 +10,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="/data/csv/instruments/1day/1_BBG0087DLDQ6.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="/data/csv/instruments/1day/338_BBG000BCHHM0.csv">
           <value>
             <Attribute>
@@ -53,6 +60,13 @@
           </value>
         </entry>
         <entry key="/data/csv/instruments/1day/CAG_BBG000BDXGP9.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="/data/csv/instruments/1day/GAZP_BBG004730RP0.csv">
           <value>
             <Attribute>
               <option name="separator" value=";" />

@@ -24,6 +24,8 @@ def get_logger(filepath: Path) -> None:
     logging.getLogger('asyncio').setLevel(logging.WARNING)
     logging.getLogger('tinkoff').setLevel(logging.WARNING)
     logging.getLogger('grpc').setLevel(logging.WARNING)
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
+    logging.getLogger('PIL').setLevel(logging.WARNING)
 
 
 def log_and_exit(ex: Exception) -> NoReturn:

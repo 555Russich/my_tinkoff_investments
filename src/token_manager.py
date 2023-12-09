@@ -9,7 +9,7 @@ from tinkoff.invest import AsyncClient
 from config import cfg
 from src.exceptions import ResourceExhausted
 from src.date_utils import DateTimeFactory, is_minute_passed
-from src.schemas import TempCandles
+from src.schemas import Candles
 
 
 class TokenManager:
@@ -68,10 +68,11 @@ def token_controller(dummy=None, single_response: bool = False) -> Callable:
                     except ResourceExhausted as e:
                         TokenManager.set_busy_flag(t)
 
-                        if isinstance(e.data, TempCandles):
-                            out += e.data.candles
-                            kwargs['from_'], kwargs['to'] = e.data.from_, e.data.to
-                            logging.info(f'from_={e.data.from_} ; to={e.data.to}')
+                        if isinstance(e.data, Candles):
+                            out += e.data
+                            from_, to = e.data[0].time, e.data[-1].time
+                            kwargs['from_'], kwargs['to'] = from_, to
+                            logging.info(f'{from_=} | {to=}')
                     except Exception:
                         raise
         return wrapper_2

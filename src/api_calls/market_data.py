@@ -10,10 +10,7 @@ from src.my_logging import log_and_exit
 from src.token_manager import token_controller
 from src.converter import Converter
 from src.exceptions import ResourceExhausted
-from src.schemas import (
-    Candle,
-    TempCandles,
-)
+from src.schemas import Candles
 
 
 @token_controller()
@@ -24,11 +21,15 @@ async def get_candles(
         interval: CandleInterval = CandleInterval.CANDLE_INTERVAL_1_MIN,
         delta: timedelta = timedelta(days=1),
         client: AsyncServices = None
-) -> list[Candle]:
-    candles = []
+) -> Candles:
+    candles = Candles()
     while True:
         to_temp = from_ + delta
+        if to_temp > to:
+            to_temp = to
+
         logging.info(f'{len(candles)=} | {from_} | {to_temp} | {to}')
+
         try:
             r = await client.market_data.get_candles(
                 figi=figi, interval=interval,
@@ -37,8 +38,7 @@ async def get_candles(
             candles += [Converter.candle(candle) for candle in r.candles]
         except AioRequestError as ex:
             if ex.code == StatusCode.RESOURCE_EXHAUSTED:
-                temp_candles = TempCandles(candles=candles, from_=from_, to=to)
-                raise ResourceExhausted(temp_candles)
+                raise ResourceExhausted(candles)
             elif ex.code == StatusCode.UNAVAILABLE:
                 logging.warning(ex, exc_info=True)
                 continue
