@@ -70,9 +70,8 @@ def token_controller(dummy=None, single_response: bool = False) -> Callable:
 
                         if isinstance(e.data, Candles):
                             out += e.data
-                            from_, to = e.data[0].time, e.data[-1].time
-                            kwargs['from_'], kwargs['to'] = from_, to
-                            logging.info(f'{from_=} | {to=}')
+                            kwargs['from_'] = e.data[-1].time
+                            logging.debug(f'{kwargs['from_']=} | {kwargs['to']=}')
                     except Exception:
                         raise
         return wrapper_2

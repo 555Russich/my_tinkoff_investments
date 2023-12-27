@@ -15,6 +15,10 @@ class IncorrectFirstCandle(APIBug):
     pass
 
 
+class IncorrectDatetimeConsistency(Exception):
+    pass
+
+
 class RequestedCandleOutOfRange(Exception):
     def __init__(self, dt_first_available_candle: datetime):
         self.dt_first_available_candle = dt_first_available_candle

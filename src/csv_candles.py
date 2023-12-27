@@ -53,7 +53,7 @@ class CSVCandles:
                 logging.error(f'{filepath=}')
                 log_and_exit(e)
 
-            ms = f'ticker_figi: "{instrument.ticker}_{instrument.figi}" | StatusHistoryInCSV: '
+            ms = f'{instrument.ticker=} | {instrument.uid=} | StatusHistoryInCSV: '
             if status == status_before:
                 if status == CSVCandlesStatus.NEED_INSERT:
                     raise IncorrectFirstCandle(f'{r[0]=} | {from_=}')
@@ -69,6 +69,9 @@ class CSVCandles:
                     logging.info(ms + 'not_exists')
                     await csv._prepare_new()
                     candles = await get_candles(instrument.figi, from_=from_, to=to, interval=interval, delta=delta)
+                    print(candles[-2])
+                    print(candles[-1])
+                    print()
                     await csv._append(candles)
                     return Candles(candles)
                 case CSVCandlesStatus.NEED_APPEND:
@@ -120,17 +123,18 @@ class CSVCandles:
 
         for i, instrument in enumerate(instruments):
             if instrument.figi in ['TCS00A106YF0']:
-                logging.info(f'Skipped {instrument.ticker=} | {instrument.figi=}')
+                logging.info(f'Skipped {instrument.ticker=} | {instrument.uid=}')
                 continue
             try:
                 candles = await cls.get_all_instrument_history(instrument=instrument, interval=interval)
-                logging.info(f'{i}/{len(instruments)} | {instrument.ticker} downloaded | {len(candles)=} | {interval=}')
+                logging.info(f'{i}/{len(instruments)} | {instrument.uid=} downloaded | {len(candles)=} | {interval=}')
             except IncorrectFirstCandle as e:
                 logging.warning(e, exc_info=True)
 
     async def _append(self, candles: Candles) -> None:
         if not candles:
             return
+        candles = candles.remove_same_candles_in_a_row()
 
         data = NEW_LINE.join(
             DELIMITER.join(
@@ -209,6 +213,6 @@ class CSVCandles:
             case _:
                 raise UnexpectedCandleInterval(f'{interval=}')
 
-        return dir_ / f'{instrument.ticker}_{instrument.figi}.csv'
+        return dir_ / f'{instrument.uid}.csv'
 
 

@@ -28,14 +28,14 @@ async def get_candles(
         if to_temp > to:
             to_temp = to
 
-        logging.info(f'{len(candles)=} | {from_} | {to_temp} | {to}')
+        logging.debug(f'{len(candles)=} | {from_} | {to_temp} | {to}')
 
         try:
             r = await client.market_data.get_candles(
                 figi=figi, interval=interval,
                 from_=from_, to=to_temp
             )
-            candles += [Converter.candle(candle) for candle in r.candles]
+            candles += [Converter.candle(candle) for candle in r.candles if candle.time <= to_temp]
         except AioRequestError as ex:
             if ex.code == StatusCode.RESOURCE_EXHAUSTED:
                 raise ResourceExhausted(candles)

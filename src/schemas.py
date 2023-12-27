@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 from collections import UserList
+from typing import Self
 
 from tinkoff.invest import Instrument
-# import pandas as pd
+from backtrader import Trade
 
 
 @dataclass(frozen=True)
@@ -18,11 +19,26 @@ class Candle:
 
 
 class Candles(UserList[Candle]):
-    # def df(self) -> pd.DataFrame:
-    #     df = pd.DataFrame([{k.capitalize(): v for k, v in c.__dict__.items()} for c in self])
-    #     #df['Time'] = pd.DatetimeIndex(df['Time'])
-        # return df
-    pass
+    def check_datetime_consistency(self) -> None:
+        from src.exceptions import IncorrectDatetimeConsistency
+
+        for i in range(1, len(self)):
+            if self[i-1].time > self[i].time:
+                raise IncorrectDatetimeConsistency(f'Previous candle datetime value later than previous candle has: '
+                                                   f'{self[i-1].time=} | {self[i].time=}')
+
+    def remove_same_candles_in_a_row(self) -> Self:
+        new_candles = Candles()
+        c1 = self[0]
+        for i in range(1, len(self)):
+            c2 = self[i]
+            if not (c1.open == c2.open and c1.high == c2.high and c1.low == c2.low and
+                    c1.close == c2.close and c1.volume == c2.volume and c1.time != c2.time):
+                new_candles.append(c1)
+                c1 = c2
+
+        new_candles.append(self[-1])
+        return new_candles
 
 
 @dataclass(frozen=True, init=False)
@@ -46,8 +62,34 @@ class TradeSignalType:
 
 @dataclass
 class StrategyResult:
-    instrument: Instrument | None = None
-    percent: float = 0
-    count_deals: int = 0
-    count_successful_deals: int = 0
+    instrument: Instrument
+    start_cash: float
+    trades: list[Trade] = None
+    sharpe_ratio: float | None = None
 
+    def __repr__(self) -> str:
+        return (
+            f'Ticker: {self.instrument.ticker}\n'
+            f'PnL: {round(self.pnlcomm, 2)} {self.instrument.currency.upper()}\n'
+            f'%PnL: {round(self.pnlcomm_percent*100, 2)}\n'
+            f'Count of successful trades {self.count_successful_trades}/{len(self.trades)}\n'
+            f'% Successful trades: {round(self.percent_successful_trades*100, 2) if self.percent_successful_trades else None}\n'
+            f'Sharpe Ratio: {round(self.sharpe_ratio, 2) if self.sharpe_ratio else None}'
+        )
+
+    @property
+    def pnlcomm(self) -> float:
+        return sum(t.pnlcomm for t in self.trades)
+
+    @property
+    def pnlcomm_percent(self) -> float:
+        return self.pnlcomm / self.start_cash
+
+    @property
+    def count_successful_trades(self) -> int:
+        return len([1 for t in self.trades if t.pnlcomm > 0])
+
+    @property
+    def percent_successful_trades(self) -> float | None:
+        if len(self.trades):
+            return self.count_successful_trades / len(self.trades)
