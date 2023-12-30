@@ -70,10 +70,8 @@ class StrategyResult:
     def __repr__(self) -> str:
         return (
             f'Ticker: {self.instrument.ticker}\n'
-            f'PnL: {round(self.pnlcomm, 2)} {self.instrument.currency.upper()}\n'
-            f'%PnL: {round(self.pnlcomm_percent*100, 2)}\n'
-            f'Count of successful trades {self.count_successful_trades}/{len(self.trades)}\n'
-            f'% Successful trades: {round(self.percent_successful_trades*100, 2) if self.percent_successful_trades else None}\n'
+            f'PnL: {round(self.pnlcomm, 2)} {self.instrument.currency.upper()} | {round(self.pnlcomm_percent*100, 2)}%\n'
+            f'{self.count_successful_trades}/{len(self.trades)} successful trades | {round(self.percent_successful_trades*100, 2) if self.percent_successful_trades else None}%\n'
             f'Sharpe Ratio: {round(self.sharpe_ratio, 2) if self.sharpe_ratio else None}'
         )
 
@@ -100,11 +98,9 @@ class StrategiesResults(UserList[StrategyResult]):
     def __repr__(self) -> str:
         return (
             f'Cumulative of {len(self)} strategies results\n'
-            f'PnL: {round(self.pnlcomm, 2)}\n'
-            f'%PnL: {round(self.pnlcomm_percent*100, 2)}%\n'
-            f'Count of successful trades {self.count_successful_trades}/{len(self.trades)}\n'
-            f'% Successful trades: {round(self.percent_successful_trades*100, 2) if self.percent_successful_trades else None}\n'
-            f'Sharpe Ratio: {round(self.sharpe_ratio, 2) if self.sharpe_ratio else None}'
+            f'PnL: {round(self.pnlcomm, 2)} | {round(self.pnlcomm_percent*100, 2)}%\n'
+            f'{self.count_successful_trades}/{len(self.trades)} successful trades | {round(self.percent_successful_trades*100, 2) if self.percent_successful_trades else None}%\n'
+            f'Average Sharpe Ratio: {round(self.sharpe_ratio, 2) if self.sharpe_ratio else None}'
         )
 
     @property
@@ -129,6 +125,7 @@ class StrategiesResults(UserList[StrategyResult]):
             return self.count_successful_trades / len(self.trades)
 
     @property
-    def sharpe_ratio(self) -> float:
-        sharpe_ratios = [r.sharpe_ratio for r in self]
-        return sum(sharpe_ratios) / len(sharpe_ratios)
+    def sharpe_ratio(self) -> float | None:
+        sharpe_ratios = [r.sharpe_ratio for r in self if r.sharpe_ratio]
+        if sharpe_ratios:
+            return sum(sharpe_ratios) / len(sharpe_ratios)
