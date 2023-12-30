@@ -15,7 +15,7 @@ from src.date_utils import DateTimeFactory, dt_form_sys
 from src.api_calls.instruments import get_instrument_by
 from src.csv_candles import CSVCandles
 from src.backtrader.csv_data import MyCSVData
-from src.schemas import StrategyResult
+from src.schemas import StrategyResult, StrategiesResults
 from src.instruments.shares import Shares
 from src.exceptions import IncorrectDatetimeConsistency
 
@@ -35,6 +35,9 @@ class StrategyLongTrendBreakDown(bt.Strategy):
         self.changes: bt.linebuffer.LinesOperation = self.closes - self.opens  # noqa
         self.min_count_bars = min_count_bars
         self.max_count_bars = 0
+
+    def get_max_size(self, price: float) -> int:
+        return self.broker.get_value() // price
 
     def log(self, txt: str, dt: datetime | None = None):
         if dt is None:
@@ -58,7 +61,7 @@ class StrategyLongTrendBreakDown(bt.Strategy):
                 self.log(f'Sell executed | Price={order.executed.price} | Cost={order.executed.value} | '
                          f'Comm={order.executed.comm}')
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            self.log(f'Order canceled/margin/rejected')
+            self.log(f'Order status: {order.Status[order.status]}')
 
         # no pending order
         self.order = None
@@ -74,16 +77,16 @@ class StrategyLongTrendBreakDown(bt.Strategy):
 
         if self.position:
             if self.position.size < 0:
-                self.buy()
+                self.buy(size=self.position.size)
             elif self.position.size > 0:
-                self.sell()
+                self.sell(size=self.position.size)
 
             if self.limit_order:
                 self.broker.cancel(self.limit_order)
                 self.limit_order = None
 
-        # if dt_form_sys.datetime_strf(self.datas[0].datetime.datetime(0)) == '14.02.2023 23:59:59':
-        #     pass
+        if dt_form_sys.datetime_strf(self.datas[0].datetime.datetime(0)) == '02.06.2009 23:59:59':
+            pass
 
         changes = self.changes.get(ago=-1, size=len(self.closes)-1)
         count_bars_in_a_row, trend_direction = self.get_count_bars_in_a_row_with_direction(changes)
@@ -94,16 +97,19 @@ class StrategyLongTrendBreakDown(bt.Strategy):
             self.max_count_bars = count_bars_in_a_row
             self.log(f'Updating {self.max_count_bars=}')
 
-        spec_count_bars = int(self.max_count_bars * 0.5)
+        # spec_count_bars = int(self.max_count_bars * 0.5)
+        spec_count_bars = self.min_count_bars
+
         if spec_count_bars <= count_bars_in_a_row >= self.min_count_bars:
             self.log(f'{count_bars_in_a_row=} | {spec_count_bars=}')
+            order_size = self.get_max_size(self.closes[0]) // 2
             if trend_direction == TradeDirection.TRADE_DIRECTION_BUY and self.changes[0] < 0:
-                self.order = self.sell()
+                self.order = self.sell(size=order_size)
                 # order_price = self.closes[0] - self.closes[0] * 0.01
                 # print(f'{order_price=}')
                 # self.limit_order = self.buy(exectype=bt.Order.Limit, price=order_price)
             elif trend_direction == TradeDirection.TRADE_DIRECTION_SELL and self.changes[0] > 0:
-                self.order = self.buy()
+                self.order = self.buy(size=order_size)
                 # order_price = self.closes[0] + self.closes[0] * 0.01
                 # print(f'{order_price=}')
                 # self.limit_order = self.sell(exectype=bt.Order.Limit, price=order_price)
@@ -112,8 +118,7 @@ class StrategyLongTrendBreakDown(bt.Strategy):
         direction = TradeDirection.TRADE_DIRECTION_UNSPECIFIED
         count_bars_in_a_row = 0
 
-        for i in range(len(changes)):
-            c = changes[-i]
+        for c in reversed(changes):
             if c == 0:
                 continue
 
@@ -157,7 +162,7 @@ async def backtest_one_instrument(
 
     strats = cerebro.run()
     # logging.info(cerebro.broker.get_value())
-    # cerebro.plot(style='candlestick')
+    cerebro.plot(style='candlestick')
 
     return StrategyResult(
         instrument=instrument,
@@ -173,16 +178,17 @@ async def main():
     comm = .0005
     min_count_bars = 8
 
-    # instrument = await get_instrument_by(id='PLZL', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='TQBR')
-    # strategy_result = await backtest_one_instrument(
-    #     instrument=instrument,
-    #     start_cash=start_cash,
-    #     comm=comm,
-    #     from_=instrument.first_1day_candle_date,
-    #     to=to,
-    #     min_count_bars=min_count_bars
-    # )
-    # exit()
+    instrument = await get_instrument_by(id='ROSN', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='TQBR')
+    strategy_result = await backtest_one_instrument(
+        instrument=instrument,
+        start_cash=start_cash,
+        comm=comm,
+        from_=instrument.first_1day_candle_date,
+        to=to,
+        min_count_bars=min_count_bars
+    )
+    print(strategy_result)
+    exit()
 
     instruments = await Shares.from_IMOEX()
     strategies_results = []
@@ -199,12 +205,13 @@ async def main():
         logging.info(f'\n{strategy_result}\n')
 
     results_with_trades = [r for r in strategies_results if r.trades]
-    results_sorted_by_successful_trades = sorted(results_with_trades, key=lambda x: x.percent_successful_trades, reverse=True)
+    results_sorted_by_successful_trades = sorted(results_with_trades, key=lambda x: x.pnlcomm)
     for s in results_sorted_by_successful_trades:
         print(s)
         print()
 
-    summary_results = 
+    results = StrategiesResults(results_with_trades)
+    print(results)
 
 
 if __name__ == '__main__':
