@@ -10,7 +10,7 @@ from tinkoff.invest import (
     InstrumentType
 )
 
-from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY
+from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY # noqa
 from my_tinkoff_investments.schemas import Candle, Candles, CSVCandlesStatus
 from my_tinkoff_investments.helpers import configure_datetime_range
 from my_tinkoff_investments.date_utils import dt_form_sys, DateTimeFactory

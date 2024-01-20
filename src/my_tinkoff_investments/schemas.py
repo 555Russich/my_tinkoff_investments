@@ -3,6 +3,8 @@ from datetime import datetime
 from collections import UserList
 from typing import Self
 
+from tinkoff.invest import Instrument, Share
+
 
 @dataclass(frozen=True)
 class Candle:
@@ -47,3 +49,11 @@ class CSVCandlesStatus:
     NEED_INSERT = 3
     TICKER_CHANGED = 5
     FIGI_CHANGED = 6
+
+
+class Instruments(UserList[Instrument]):
+    pass
+
+
+class Shares(Instruments[Share]):
+    pass
