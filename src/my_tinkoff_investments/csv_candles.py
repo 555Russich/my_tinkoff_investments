@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import aiofiles
@@ -11,13 +11,13 @@ from tinkoff.invest import (
 )
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY
-from src.my_logging import log_and_exit
-from src.schemas import Candle, Candles, CSVCandlesStatus
-from src.helpers import configure_datetime_range
-from src.date_utils import dt_form_sys, DateTimeFactory
-from src.api_calls.market_data import get_candles
-from src.api_calls.instruments import get_shares
-from src.exceptions import (
+from my_tinkoff_investments.my_logging import log_and_exit
+from my_tinkoff_investments.schemas import Candle, Candles, CSVCandlesStatus
+from my_tinkoff_investments.helpers import configure_datetime_range
+from my_tinkoff_investments.date_utils import dt_form_sys, DateTimeFactory
+from my_tinkoff_investments.api_calls.market_data import get_candles
+from my_tinkoff_investments.api_calls.instruments import get_shares
+from my_tinkoff_investments.exceptions import (
     IncorrectFirstCandle,
     UnexpectedCandleInterval
 )

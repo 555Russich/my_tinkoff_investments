@@ -1,9 +1,8 @@
 from tinkoff.invest import InstrumentIdType
 
 from config import FILEPATH_LOGGER
-from src.my_logging import get_logger
-from src.api_calls.instruments import get_instrument_by
-from src.csv_candles import CSVCandles
+from my_tinkoff_investments.my_logging import get_logger
+from my_tinkoff_investments.api_calls.instruments import get_instrument_by
 
 
 async def main():

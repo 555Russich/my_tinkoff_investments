@@ -7,9 +7,9 @@ from typing import Callable
 from tinkoff.invest import AsyncClient
 
 from config import cfg
-from src.exceptions import ResourceExhausted
-from src.date_utils import DateTimeFactory, is_minute_passed
-from src.schemas import Candles
+from my_tinkoff_investments.exceptions import ResourceExhausted
+from my_tinkoff_investments.date_utils import DateTimeFactory, is_minute_passed
+from my_tinkoff_investments.schemas import Candles
 
 
 class TokenManager:

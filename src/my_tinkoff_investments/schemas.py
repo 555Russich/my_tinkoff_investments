@@ -17,7 +17,7 @@ class Candle:
 
 class Candles(UserList[Candle]):
     def check_datetime_consistency(self) -> None:
-        from src.exceptions import IncorrectDatetimeConsistency
+        from my_tinkoff_investments.exceptions import IncorrectDatetimeConsistency
 
         for i in range(1, len(self)):
             if self[i-1].time > self[i].time:

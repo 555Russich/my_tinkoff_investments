@@ -7,9 +7,9 @@ from tinkoff.invest import (
     TradeDirection,
 )
 
-from src.api_calls.market_data import get_candles
-from src.date_utils import DateTimeFactory, dt_form_sys
-from src.exceptions import (
+from my_tinkoff_investments.api_calls.market_data import get_candles
+from my_tinkoff_investments.date_utils import DateTimeFactory, dt_form_sys
+from my_tinkoff_investments.exceptions import (
     UnexpectedCandleInterval,
     RequestedCandleOutOfRange
 )

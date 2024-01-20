@@ -1,7 +1,7 @@
 # from __future__ import annotations
 # from typing import TYPE_CHECKING
 # if TYPE_CHECKING:
-from src.instruments.shares import Shares
+from my_tinkoff_investments.instruments.shares import Shares
 
 from datetime import datetime
 import logging
@@ -14,8 +14,8 @@ from tinkoff.invest import (
 )
 from tinkoff.invest.exceptions import AioRequestError
 
-from src.token_manager import token_controller
-from src.my_logging import log_and_exit
+from my_tinkoff_investments.token_manager import token_controller
+from my_tinkoff_investments.my_logging import log_and_exit
 
 
 @token_controller()

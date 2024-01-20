@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.schemas import Candles
+from my_tinkoff_investments.schemas import Candles
 
 
 class TinkoffAPIError(Exception):

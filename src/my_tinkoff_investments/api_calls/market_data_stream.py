@@ -1,6 +1,4 @@
 import asyncio
-import logging
-from datetime import datetime, timedelta
 
 from tinkoff.invest import (
     CandleInstrument,
@@ -18,9 +16,7 @@ from tinkoff.invest import (
 )
 from tinkoff.invest.async_services import AsyncServices
 
-
-from src.my_logging import log_and_exit
-from src.token_manager import token_controller
+from my_tinkoff_investments.token_manager import token_controller
 
 
 async def _request_iterator(
