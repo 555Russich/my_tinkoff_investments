@@ -6,14 +6,14 @@ from typing import Callable
 
 from tinkoff.invest import AsyncClient
 
-from config import cfg
+from config import TOKENS_FULL_ACCESS, TOKENS_READ_ONLY  # noqa
 from my_tinkoff_investments.exceptions import ResourceExhausted
 from my_tinkoff_investments.date_utils import DateTimeFactory, is_minute_passed
 from my_tinkoff_investments.schemas import Candles
 
 
 class TokenManager:
-    _tokens = {t: True for t in cfg.TOKENS_FULL_ACCESS + cfg.TOKENS_READ_ONLY}
+    _tokens = {t: True for t in TOKENS_FULL_ACCESS + TOKENS_READ_ONLY}
     _dt: datetime | None = None
 
     @classmethod
