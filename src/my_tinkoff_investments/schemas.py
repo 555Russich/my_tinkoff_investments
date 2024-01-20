@@ -47,11 +47,3 @@ class CSVCandlesStatus:
     NEED_INSERT = 3
     TICKER_CHANGED = 5
     FIGI_CHANGED = 6
-
-
-@dataclass
-class TradeSignalType:
-    UNDEFINED = -1
-    VOLUME = 1
-    PRICE = 2
-    VOLUME_AND_PRICE = 3

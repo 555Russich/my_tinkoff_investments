@@ -11,7 +11,6 @@ from tinkoff.invest import (
 )
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY
-from my_tinkoff_investments.my_logging import log_and_exit
 from my_tinkoff_investments.schemas import Candle, Candles, CSVCandlesStatus
 from my_tinkoff_investments.helpers import configure_datetime_range
 from my_tinkoff_investments.date_utils import dt_form_sys, DateTimeFactory
@@ -48,9 +47,9 @@ class CSVCandles:
         while True:
             try:
                 status, *r = await csv._status(from_=from_, to=to, interval=interval)
-            except Exception as e:
+            except Exception as ex:
                 logging.error(f'{filepath=}')
-                log_and_exit(e)
+                raise ex
 
             ms = f'{instrument.ticker=} | {instrument.uid=} | StatusHistoryInCSV: '
             if status == status_before:

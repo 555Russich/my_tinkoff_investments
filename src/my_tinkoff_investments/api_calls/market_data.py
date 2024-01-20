@@ -6,7 +6,6 @@ from tinkoff.invest import CandleInterval
 from tinkoff.invest.exceptions import AioRequestError
 from grpc import StatusCode
 
-from my_tinkoff_investments.my_logging import log_and_exit
 from my_tinkoff_investments.token_manager import token_controller
 from my_tinkoff_investments.converter import convert_candle
 from my_tinkoff_investments.exceptions import ResourceExhausted, UnexpectedCandleInterval
@@ -46,9 +45,9 @@ async def get_candles(
                 logging.warning(ex, exc_info=True)
                 continue
             else:
-                log_and_exit(ex)
+                raise ex
         except Exception as ex:
-            log_and_exit(ex)
+            raise ex
 
         from_ = to_temp
         if from_ >= to:

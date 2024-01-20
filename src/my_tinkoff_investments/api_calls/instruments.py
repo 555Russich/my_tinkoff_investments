@@ -1,7 +1,3 @@
-# from __future__ import annotations
-# from typing import TYPE_CHECKING
-# if TYPE_CHECKING:
-from my_tinkoff_investments.instruments.shares import Shares
 
 from datetime import datetime
 import logging
@@ -15,12 +11,11 @@ from tinkoff.invest import (
 from tinkoff.invest.exceptions import AioRequestError
 
 from my_tinkoff_investments.token_manager import token_controller
-from my_tinkoff_investments.my_logging import log_and_exit
+from my_tinkoff_investments.instruments.shares import Shares
 
 
 @token_controller()
 async def get_shares(client: AsyncServices = None) -> Shares:
-    # from src.instruments.shares import Shares
     return Shares((await client.instruments.shares()).instruments)
 
 
@@ -35,7 +30,7 @@ async def get_instrument_by(
         return (await client.instruments.get_instrument_by(id_type=id_type, id=id, class_code=class_code)).instrument
     except AioRequestError as ex:
         logging.error(f'Error while getting instrument by {id=} | {class_code=}')
-        log_and_exit(ex)
+        raise ex
 
 
 @token_controller()
