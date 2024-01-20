@@ -1,7 +1,7 @@
-from __future__ import annotations
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from src.instruments.shares import Shares
+# from __future__ import annotations
+# from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+from src.instruments.shares import Shares
 
 from datetime import datetime
 import logging
@@ -9,15 +9,10 @@ import logging
 from tinkoff.invest.async_services import AsyncServices
 from tinkoff.invest import (
     Instrument,
-    Share,
-    Currency,
-    Bond,
-    Future,
     Dividend,
     InstrumentIdType,
 )
 from tinkoff.invest.exceptions import AioRequestError
-from grpc import StatusCode
 
 from src.token_manager import token_controller
 from src.my_logging import log_and_exit
@@ -25,7 +20,7 @@ from src.my_logging import log_and_exit
 
 @token_controller()
 async def get_shares(client: AsyncServices = None) -> Shares:
-    from src.instruments.shares import Shares
+    # from src.instruments.shares import Shares
     return Shares((await client.instruments.shares()).instruments)
 
 

@@ -10,7 +10,7 @@ from tinkoff.invest import (
     InstrumentType
 )
 
-from config import DIR_CSV_1DAY, DIR_CSV_1MIN
+from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY
 from src.my_logging import log_and_exit
 from src.schemas import Candle, Candles, CSVCandlesStatus
 from src.helpers import configure_datetime_range
@@ -39,7 +39,6 @@ class CSVCandles:
             from_: datetime,
             to: datetime,
             interval: CandleInterval,
-            delta: timedelta
     ) -> Candles:
         from_, to = await configure_datetime_range(instrument, from_=from_, to=to, interval=interval)
         filepath = cls.get_filepath(instrument, interval=interval)
@@ -68,10 +67,7 @@ class CSVCandles:
                 case CSVCandlesStatus.NOT_EXISTS:
                     logging.info(ms + 'not_exists')
                     await csv._prepare_new()
-                    candles = await get_candles(instrument.figi, from_=from_, to=to, interval=interval, delta=delta)
-                    print(candles[-2])
-                    print(candles[-1])
-                    print()
+                    candles = await get_candles(instrument.figi, from_=from_, to=to, interval=interval)
                     await csv._append(candles)
                     return Candles(candles)
                 case CSVCandlesStatus.NEED_APPEND:
@@ -79,8 +75,7 @@ class CSVCandles:
                     logging.info(
                         ms + f'need_append. from_temp={dt_form_sys.datetime_strf(from_temp)} | to={dt_form_sys.datetime_strf(to)}')
                     # 1st candle in response is last candle in file
-                    candles = (await get_candles(instrument.figi, from_=from_temp, to=to,
-                                                 interval=interval, delta=delta))[1:]
+                    candles = (await get_candles(instrument.figi, from_=from_temp, to=to, interval=interval))[1:]
 
                     # append to file only completed candles
                     complete_candles = Candles([c for c in candles if c.is_complete])
@@ -92,8 +87,7 @@ class CSVCandles:
                     to_temp = r[0]
                     logging.info(ms + f'need_insert. from={dt_form_sys.datetime_strf(from_)} |'
                                       f' to_temp={dt_form_sys.datetime_strf(to_temp)}')
-                    candles_ = await get_candles(instrument.figi, from_=from_, to=to_temp, interval=interval,
-                                                 delta=delta)
+                    candles_ = await get_candles(instrument.figi, from_=from_, to=to_temp, interval=interval)
                     # 1st candle in file is last candle in get_candles response
                     await csv._insert(candles_[:-1])
 
@@ -103,15 +97,13 @@ class CSVCandles:
 
         if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
             from_ = instrument.first_1min_candle_date
-            delta = timedelta(days=1)
         elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
-            delta = timedelta(days=365)
             from_ = instrument.first_1day_candle_date
         else:
             raise Exception(f'Unexpected {interval=} for downloading history')
 
         return await CSVCandles.download_or_read(
-            instrument=instrument, from_=from_, to=DateTimeFactory.now(), interval=interval, delta=delta)
+            instrument=instrument, from_=from_, to=DateTimeFactory.now(), interval=interval)
 
     @classmethod
     async def get_all_instruments_by_type(cls, instruments_type: InstrumentType, interval: CandleInterval) -> None:
@@ -207,9 +199,9 @@ class CSVCandles:
     def get_filepath(cls, instrument: Instrument, interval: CandleInterval) -> Path:
         match interval:
             case interval.CANDLE_INTERVAL_1_MIN:
-                dir_ = DIR_CSV_1MIN
+                dir_ = DIR_CANDLES_1MIN
             case interval.CANDLE_INTERVAL_DAY:
-                dir_ = DIR_CSV_1DAY
+                dir_ = DIR_CANDLES_1DAY
             case _:
                 raise UnexpectedCandleInterval(f'{interval=}')
 
