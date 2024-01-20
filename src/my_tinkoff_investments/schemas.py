@@ -4,6 +4,7 @@ from collections import UserList
 from typing import Self
 
 from tinkoff.invest import Instrument, Share
+from my_tinkoff_investments.enums import Board
 
 
 @dataclass(frozen=True)
@@ -56,4 +57,7 @@ class Instruments(UserList[Instrument]):
 
 
 class Shares(Instruments[Share]):
-    pass
+    @classmethod
+    async def from_board(cls, board: Board) -> Self:
+        from my_tinkoff_investments.api_calls.instruments import get_shares
+        return cls([s for s in await get_shares() if s.class_code == board.value])
