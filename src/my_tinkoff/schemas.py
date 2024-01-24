@@ -40,6 +40,9 @@ class Candles(UserList[Candle]):
         new_candles.append(self[-1])
         return new_candles
 
+    def remove_weekend_candles(self) -> Self:
+        return self.__class__([c for c in self if c.time.weekday() not in (5, 6)])
+
 
 @dataclass(frozen=True, init=False)
 class CSVCandlesStatus:
