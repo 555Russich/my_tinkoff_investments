@@ -71,7 +71,7 @@ def token_controller(dummy=None, single_response: bool = False) -> Callable:
                     except ResourceExhausted as e:
                         TokenManager.set_busy_flag(t)
 
-                        if isinstance(e.data, Candles):
+                        if isinstance(e.data, Candles) and e.data:
                             out += e.data
                             kwargs['from_'] = e.data[-1].time
                             logging.debug(f'{kwargs['from_']=} | {kwargs['to']=}')
