@@ -4,3 +4,4 @@
 /.tinkoff_tokens.env
 /trading.log
 /.idea/
+/.idea/*
