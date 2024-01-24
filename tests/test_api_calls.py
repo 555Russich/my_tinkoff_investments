@@ -1,6 +1,7 @@
 from tinkoff.invest import (
     Instrument,
     InstrumentIdType,
+    GetDividendsResponse,
 )
 
 from my_tinkoff.api_calls.instruments import (
@@ -10,6 +11,7 @@ from my_tinkoff.api_calls.instruments import (
 )
 from my_tinkoff.schemas import Shares
 from my_tinkoff.enums import Board
+from my_tinkoff.date_utils import DateTimeFactory
 
 
 async def test_get_shares():
@@ -27,5 +29,15 @@ async def test_get_instrument_by_ticker() -> None:
 
 
 async def test_get_dividends() -> None:
-    dividends = await get_dividends()
-    print(dividends)
+    instrument = await get_instrument_by(
+        id='SBER',
+        id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
+        class_code=Board.TQBR
+    )
+
+    dividends = await get_dividends(
+        instrument=instrument,
+        from_=instrument.first_1day_candle_date,
+        to=DateTimeFactory.now()
+    )
+    assert isinstance(dividends, list)
