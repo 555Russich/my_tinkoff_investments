@@ -15,24 +15,6 @@ from my_tinkoff.exceptions import (
 )
 
 
-def get_opposite_direction(direction: TradeDirection) -> TradeDirection:
-    if direction == TradeDirection.TRADE_DIRECTION_SELL:
-        return TradeDirection.TRADE_DIRECTION_BUY
-    elif direction == TradeDirection.TRADE_DIRECTION_BUY:
-        return TradeDirection.TRADE_DIRECTION_SELL
-
-
-def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> None:
-    if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
-        if dt < instrument.first_1min_candle_date:
-            raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1min_candle_date)
-    elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
-        if DateTimeFactory.replace_time(dt) < DateTimeFactory.replace_time(instrument.first_1day_candle_date):
-            raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1day_candle_date)
-    else:
-        raise UnexpectedCandleInterval(repr(interval))
-
-
 async def configure_datetime_range(
         instrument: Instrument,
         from_: datetime,
@@ -40,10 +22,14 @@ async def configure_datetime_range(
         interval: CandleInterval
 ) -> tuple[datetime, datetime]:
     is_from_defined, is_to_defined = False, False
-    from_ = from_.replace(hour=0, minute=0, second=0, microsecond=0)
     delta = timedelta(days=15)
 
-    logging.info(f'figi={instrument.figi} | 1day candle={instrument.first_1day_candle_date}')
+    if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
+        from_ = from_
+    elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
+        from_ = from_.replace(hour=0, minute=0, second=0, microsecond=0)
+        logging.debug(f'ticker={instrument.ticker} | 1day candle={instrument.first_1day_candle_date}')
+
     try:
         check_first_candle_availability(instrument, dt=from_, interval=interval)
     except RequestedCandleOutOfRange as ex:
@@ -126,3 +112,21 @@ async def configure_datetime_range(
             to_temp += delta * 2
 
     return from_, to
+
+
+def get_opposite_direction(direction: TradeDirection) -> TradeDirection:
+    if direction == TradeDirection.TRADE_DIRECTION_SELL:
+        return TradeDirection.TRADE_DIRECTION_BUY
+    elif direction == TradeDirection.TRADE_DIRECTION_BUY:
+        return TradeDirection.TRADE_DIRECTION_SELL
+
+
+def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> None:
+    if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
+        if dt < instrument.first_1min_candle_date:
+            raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1min_candle_date)
+    elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
+        if DateTimeFactory.replace_time(dt) < DateTimeFactory.replace_time(instrument.first_1day_candle_date):
+            raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1day_candle_date)
+    else:
+        raise UnexpectedCandleInterval(repr(interval))
