@@ -8,7 +8,6 @@ requires-python = ">= 3.12"
 version = "0.1"
 dependencies = [
     'tinkoff-investments',
-    'aiofiles',
     'python-dotenv',
     'tzdata',
 ]

@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any
 
-import aiofiles
 from tinkoff.invest import (
     CandleInterval,
     Instrument,
@@ -133,23 +132,23 @@ class CSVCandles:
             ) for candle in candles
         ) + NEW_LINE
 
-        async with aiofiles.open(self.filepath, 'a') as f:
-            await f.write(data)
+        with open(self.filepath, 'a') as f:
+            f.write(data)
 
     async def _insert(self, candles: Candles):
-        async with aiofiles.open(self.filepath, 'r') as f:
-            data = await f.readlines()
+        with open(self.filepath, 'r') as f:
+            data = f.readlines()
 
         await self._prepare_new()
         await self._append(candles)
-        async with aiofiles.open(self.filepath, 'a') as f:
-            await f.writelines(data[1:])
+        with open(self.filepath, 'a') as f:
+            f.writelines(data[1:])
 
     async def _read(self, from_: datetime, to: datetime, interval: CandleInterval) -> tuple:
         candles = Candles()
 
-        async with aiofiles.open(self.filepath, 'r') as f:
-            data = await f.readlines()
+        with open(self.filepath, 'r') as f:
+            data = f.readlines()
             columns = data[0].replace(NEW_LINE, '').split(DELIMITER)
             data = data[1:]
 
@@ -185,8 +184,8 @@ class CSVCandles:
         return CSVCandlesStatus.OK, candles
 
     async def _prepare_new(self):
-        async with aiofiles.open(self.filepath, 'w') as f:
-            await f.write(DELIMITER.join(COLUMNS) + NEW_LINE)
+        with open(self.filepath, 'w') as f:
+            f.write(DELIMITER.join(COLUMNS) + NEW_LINE)
 
     async def _status(self, from_: datetime, to: datetime, interval: CandleInterval) -> tuple[CSVCandlesStatus, Any]:
         if not self.filepath.exists():
