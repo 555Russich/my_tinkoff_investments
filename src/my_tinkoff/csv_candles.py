@@ -11,12 +11,12 @@ from tinkoff.invest import (
 )
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY # noqa
-from my_tinkoff_investments.schemas import Candle, Candles, CSVCandlesStatus
-from my_tinkoff_investments.helpers import configure_datetime_range
-from my_tinkoff_investments.date_utils import dt_form_sys, DateTimeFactory
-from my_tinkoff_investments.api_calls.market_data import get_candles
-from my_tinkoff_investments.api_calls.instruments import get_shares
-from my_tinkoff_investments.exceptions import (
+from my_tinkoff.schemas import Candle, Candles, CSVCandlesStatus
+from my_tinkoff.helpers import configure_datetime_range
+from my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
+from my_tinkoff.api_calls.market_data import get_candles
+from my_tinkoff.api_calls.instruments import get_shares
+from my_tinkoff.exceptions import (
     IncorrectFirstCandle,
     UnexpectedCandleInterval
 )

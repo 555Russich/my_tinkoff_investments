@@ -1,4 +1,3 @@
-
 from datetime import datetime
 import logging
 
@@ -10,8 +9,8 @@ from tinkoff.invest import (
 )
 from tinkoff.invest.exceptions import AioRequestError
 
-from my_tinkoff_investments.token_manager import token_controller
-from my_tinkoff_investments.schemas import Shares
+from my_tinkoff.token_manager import token_controller
+from my_tinkoff.schemas import Shares
 
 
 @token_controller()
@@ -34,5 +33,6 @@ async def get_instrument_by(
 
 
 @token_controller()
-async def get_dividends(figi: str, from_: datetime, to: datetime, client: AsyncServices = None) -> list[Dividend]:
-    return (await client.instruments.get_dividends(figi=figi, from_=from_, to=to)).dividends
+async def get_dividends(instrument: Instrument, from_: datetime,
+                        to: datetime, client: AsyncServices = None) -> list[Dividend]:
+    return (await client.instruments.get_dividends(figi=instrument.figi, from_=from_, to=to)).dividends

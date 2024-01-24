@@ -6,10 +6,10 @@ from tinkoff.invest import CandleInterval
 from tinkoff.invest.exceptions import AioRequestError
 from grpc import StatusCode
 
-from my_tinkoff_investments.token_manager import token_controller
-from my_tinkoff_investments.converter import convert_candle
-from my_tinkoff_investments.exceptions import ResourceExhausted, UnexpectedCandleInterval
-from my_tinkoff_investments.schemas import Candles
+from my_tinkoff.token_manager import token_controller
+from my_tinkoff.converter import convert_candle
+from my_tinkoff.exceptions import ResourceExhausted, UnexpectedCandleInterval
+from my_tinkoff.schemas import Candles
 
 
 @token_controller()

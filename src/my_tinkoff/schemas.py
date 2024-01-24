@@ -4,7 +4,7 @@ from collections import UserList
 from typing import Self
 
 from tinkoff.invest import Instrument, Share
-from my_tinkoff_investments.enums import Board
+from my_tinkoff.enums import Board
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class Candle:
 
 class Candles(UserList[Candle]):
     def check_datetime_consistency(self) -> None:
-        from my_tinkoff_investments.exceptions import IncorrectDatetimeConsistency
+        from my_tinkoff.exceptions import IncorrectDatetimeConsistency
 
         for i in range(1, len(self)):
             if self[i-1].time > self[i].time:
@@ -59,5 +59,5 @@ class Instruments(UserList[Instrument]):
 class Shares(Instruments[Share]):
     @classmethod
     async def from_board(cls, board: Board) -> Self:
-        from my_tinkoff_investments.api_calls.instruments import get_shares
+        from my_tinkoff.api_calls.instruments import get_shares
         return cls([s for s in await get_shares() if s.class_code == board.value])

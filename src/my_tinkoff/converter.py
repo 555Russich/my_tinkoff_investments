@@ -1,6 +1,6 @@
 from tinkoff.invest.schemas import Quotation, HistoricCandle, MoneyValue
 
-from my_tinkoff_investments.schemas import Candle
+from my_tinkoff.schemas import Candle
 
 
 def quotation2decimal(value: Quotation) -> float:
