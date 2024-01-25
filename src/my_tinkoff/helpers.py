@@ -56,6 +56,10 @@ async def configure_datetime_range(
             interval=CandleInterval.CANDLE_INTERVAL_DAY,
         )
 
+        if not candles:
+            # Share IPO was after `to_temp`, that's why list of candles is empty
+            break
+
         for candle in candles:
             match candle.time.replace(hour=0):
                 case x if x == from_:
