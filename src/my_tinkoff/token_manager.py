@@ -25,7 +25,7 @@ class TokenManager:
 
     @classmethod
     async def get(cls):
-        assert len(cls.list_all()) > 0
+        assert len(cls.list_all()) > 0, f'{TOKENS_FULL_ACCESS=} | {TOKENS_READ_ONLY=}'
         token = None
 
         if cls._dt and is_minute_passed(cls._dt):
@@ -42,7 +42,7 @@ class TokenManager:
             return token
         else:
             sleep_time = 60 - int(time.strftime('%S'))
-            logging.info(f'{sleep_time} seconds sleep. All tokens are busy.')
+            logging.debug(f'{sleep_time} seconds sleep ZZZ... All tokens are busy')
             await asyncio.sleep(sleep_time)
             return await cls.get()
 

@@ -60,18 +60,18 @@ class CSVCandles:
 
             match status:
                 case CSVCandlesStatus.OK:
-                    logging.info(ms + 'OK')
+                    logging.debug(ms + 'OK')
                     return r[0]
                 case CSVCandlesStatus.NOT_EXISTS:
-                    logging.info(ms + 'not_exists')
+                    logging.debug(ms + 'not_exists')
                     await csv._prepare_new()
                     candles = await get_candles(instrument.figi, from_=from_, to=to, interval=interval)
                     await csv._append(candles)
                     return Candles(candles)
                 case CSVCandlesStatus.NEED_APPEND:
                     from_temp, candles_from_file = r
-                    logging.info(
-                        ms + f'need_append. from_temp={dt_form_sys.datetime_strf(from_temp)} | to={dt_form_sys.datetime_strf(to)}')
+                    logging.debug(f'{ms} need_append. from_temp={dt_form_sys.datetime_strf(from_temp)} | '
+                                  f'to={dt_form_sys.datetime_strf(to)}')
                     # 1st candle in response is last candle in file
                     candles = (await get_candles(instrument.figi, from_=from_temp, to=to, interval=interval))[1:]
 
@@ -83,8 +83,8 @@ class CSVCandles:
                     return candles_from_file + candles
                 case CSVCandlesStatus.NEED_INSERT:
                     to_temp = r[0]
-                    logging.info(ms + f'need_insert. from={dt_form_sys.datetime_strf(from_)} |'
-                                      f' to_temp={dt_form_sys.datetime_strf(to_temp)}')
+                    logging.debug(f'{ms} need_insert. from={dt_form_sys.datetime_strf(from_)} | '
+                                  f'to_temp={dt_form_sys.datetime_strf(to_temp)}')
                     candles_ = await get_candles(instrument.figi, from_=from_, to=to_temp, interval=interval)
                     # 1st candle in file is last candle in get_candles response
                     await csv._insert(candles_[:-1])
@@ -113,11 +113,11 @@ class CSVCandles:
 
         for i, instrument in enumerate(instruments):
             if instrument.figi in ['TCS00A106YF0']:
-                logging.info(f'Skipped {instrument.ticker=} | {instrument.uid=}')
+                logging.debug(f'Skipped {instrument.ticker=} | {instrument.uid=}')
                 continue
             try:
                 candles = await cls.get_all_instrument_history(instrument=instrument, interval=interval)
-                logging.info(f'{i}/{len(instruments)} | {instrument.uid=} downloaded | {len(candles)=} | {interval=}')
+                logging.debug(f'{i}/{len(instruments)} | {instrument.uid=} downloaded | {len(candles)=} | {interval=}')
             except IncorrectFirstCandle as e:
                 logging.warning(e, exc_info=True)
 
