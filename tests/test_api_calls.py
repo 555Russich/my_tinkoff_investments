@@ -1,13 +1,13 @@
 from tinkoff.invest import (
     Instrument,
     InstrumentIdType,
-    GetDividendsResponse,
 )
 
 from my_tinkoff.api_calls.instruments import (
     get_shares,
     get_dividends,
     get_instrument_by,
+    get_trading_schedules,
 )
 from my_tinkoff.schemas import Shares
 from my_tinkoff.enums import Board
@@ -41,3 +41,11 @@ async def test_get_dividends() -> None:
         to=DateTimeFactory.now()
     )
     assert isinstance(dividends, list)
+
+
+async def test_get_trading_schedules() -> None:
+    from datetime import timedelta
+    now = DateTimeFactory.now()
+
+    r = await get_trading_schedules(from_=now, to=now + timedelta(days=7))
+    print(r)
