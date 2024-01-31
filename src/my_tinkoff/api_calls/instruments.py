@@ -36,3 +36,13 @@ async def get_instrument_by(
 async def get_dividends(instrument: Instrument, from_: datetime,
                         to: datetime, client: AsyncServices = None) -> list[Dividend]:
     return (await client.instruments.get_dividends(figi=instrument.figi, from_=from_, to=to)).dividends
+
+
+@token_controller(single_response=True)
+async def get_trading_schedules(
+        exchange: str = '',
+        from_: datetime | None = None,
+        to: datetime | None = None,
+        client: AsyncServices = None
+) -> None:
+    return await client.instruments.trading_schedules(exchange=exchange, from_=from_, to=to)
