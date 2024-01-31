@@ -172,10 +172,10 @@ class CSVCandles:
                 candle = Candle(*values, is_complete=True)
 
                 if i == 0 and candle.time > from_:
-                    if not (interval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date()):
+                    if not interval == interval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date():
                         return CSVCandlesStatus.NEED_INSERT, candle.time
                 if i == len(data) - 1 and candle.time < to:
-                    if not (interval.CANDLE_INTERVAL_DAY and candle.time.date() == to.date()):
+                    if not interval == interval.CANDLE_INTERVAL_DAY and candle.time.date() == to.date():
                         return CSVCandlesStatus.NEED_APPEND, candle.time, candles
 
                 if from_ <= candle.time <= to:
