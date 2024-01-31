@@ -61,16 +61,15 @@ async def configure_datetime_range(
             break
 
         for candle in candles:
-            match candle.time.replace(hour=0):
-                case x if x == from_:
-                    from_ = candle.time
-                    is_from_defined = True
-                    break
-                case x if x < from_:
-                    closest_day_early = x
+            if candle.time.date() == from_.date():
+                is_from_defined = True
+                break
+            if candle.time.date() < from_.date():
+                closest_day_early = candle.time
         else:
             if closest_day_early:
-                from_ = closest_day_early
+                from_ = closest_day_early.replace(hour=from_.hour, minute=from_.minute,
+                                                  second=from_.second, microsecond=from_.microsecond)
                 is_from_defined = True
 
             from_temp -= delta * 2
@@ -78,7 +77,6 @@ async def configure_datetime_range(
 
     # check if "to" is trading day OR find the closest later day after OR
     # if to is today and last trading day was yesterday, the closest earlier day
-    to_date = to.replace(hour=0, minute=0, second=0, microsecond=0)
     from_temp = to - delta
     to_temp = to + delta
     closest_day_later = None
@@ -96,17 +94,17 @@ async def configure_datetime_range(
             break
 
         for candle in candles:
-            match candle.time.replace(hour=0):
-                case x if x == to_date:
-                    is_to_defined = True
-                    break
-                case x if x > to_date and not closest_day_later:
-                    closest_day_later = x
-                case x if x < to_date:
-                    closest_day_early = x
+            if candle.time.date() == to.date():
+                is_to_defined = True
+                break
+            elif candle.time.date() > to.date() and not closest_day_later:
+                closest_day_later = candle.time
+            elif candle.time.date() < to.date():
+                closest_day_early = candle.time
         else:
             if closest_day_later:
-                to = closest_day_later
+                to = closest_day_later.replace(hour=to.hour, minute=to.minute,
+                                               second=to.second, microsecond=to.microsecond)
                 is_to_defined = True
             elif closest_day_early:
                 to = closest_day_early.replace(hour=23, minute=59, second=59, microsecond=999999)
