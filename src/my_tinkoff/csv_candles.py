@@ -157,17 +157,12 @@ class CSVCandles:
                 values = []
 
                 for column, value in zip(columns, str_values):
-                    match column:
-                        case c if c in ('open', 'high', 'low', 'close'):
-                            values.append(float(value))
-                        case 'volume':
-                            values.append(int(value))
-                        case 'time':
-                            # try:
-                            values.append(datetime.fromisoformat(value))
-                            # except ValueError:
-                            #     self.filepath.unlink()
-                            #     return CSVCandlesStatus.NOT_EXISTS, None
+                    if column in ('open', 'high', 'low', 'close'):
+                        values.append(float(value))
+                    elif column == 'volume':
+                        values.append(int(value))
+                    elif column == 'time':
+                        values.append(datetime.fromisoformat(value))
 
                 candle = Candle(*values, is_complete=True)
 
@@ -175,7 +170,7 @@ class CSVCandles:
                     if not interval == interval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date():
                         return CSVCandlesStatus.NEED_INSERT, candle.time
                 if i == len(data) - 1 and candle.time < to:
-                    if not interval == interval.CANDLE_INTERVAL_DAY and candle.time.date() == to.date():
+                    if not interval == interval.CANDLE_INTERVAL_DAY:
                         return CSVCandlesStatus.NEED_APPEND, candle.time, candles
 
                 if from_ <= candle.time <= to:
