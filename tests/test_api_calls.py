@@ -25,6 +25,8 @@ async def test_get_instrument_by_ticker() -> None:
         id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
         class_code=Board.TQBR
     )
+    print(instrument)
+    print(instrument.first_1min_candle_date)
     assert isinstance(instrument, Instrument)
 
 
@@ -48,4 +50,3 @@ async def test_get_trading_schedules() -> None:
     now = DateTimeFactory.now()
 
     r = await get_trading_schedules(from_=now, to=now + timedelta(days=7))
-    print(r)

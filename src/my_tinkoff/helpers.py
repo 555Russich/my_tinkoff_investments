@@ -5,10 +5,14 @@ from tinkoff.invest import (
     CandleInterval,
     Instrument,
     TradeDirection,
+    Quotation,
+    HistoricCandle,
+    MoneyValue,
 )
 
 from my_tinkoff.api_calls.market_data import get_candles
 from my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
+from my_tinkoff.schemas import Candle
 from my_tinkoff.exceptions import (
     UnexpectedCandleInterval,
     RequestedCandleOutOfRange
@@ -132,3 +136,28 @@ def check_first_candle_availability(instrument: Instrument, dt: datetime, interv
             raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1day_candle_date)
     else:
         raise UnexpectedCandleInterval(repr(interval))
+
+
+def quotation2decimal(value: Quotation) -> float:
+    return value.units + value.nano * 10 ** -9
+
+
+def decimal2quotation(value: float) -> Quotation:
+    units, nano = [x for x in str(value).split('.')]
+    return Quotation(int(units), int(nano * 10 ** 9))
+
+
+def moneyvalue2quotation(v: MoneyValue) -> Quotation:
+    return Quotation(units=v.units, nano=v.nano)
+
+
+def convert_candle(candle: HistoricCandle) -> Candle:
+    return Candle(
+        quotation2decimal(candle.open),
+        quotation2decimal(candle.high),
+        quotation2decimal(candle.low),
+        quotation2decimal(candle.close),
+        candle.volume,
+        candle.time,
+        candle.is_complete
+    )

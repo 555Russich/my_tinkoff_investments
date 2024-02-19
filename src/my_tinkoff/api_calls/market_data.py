@@ -7,7 +7,7 @@ from tinkoff.invest.exceptions import AioRequestError
 from grpc import StatusCode
 
 from my_tinkoff.token_manager import token_controller
-from my_tinkoff.converter import convert_candle
+from my_tinkoff.helpers import convert_candle
 from my_tinkoff.exceptions import ResourceExhausted, UnexpectedCandleInterval
 from my_tinkoff.schemas import Candles
 
