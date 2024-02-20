@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from tinkoff.invest import (
@@ -54,7 +54,7 @@ class CSVCandles:
             if status == status_before:
                 if status == CSVCandlesStatus.NEED_INSERT:
                     raise IncorrectFirstCandle(f'{r[0]=} | {from_=}')
-                raise Exception(f'Same {status=} | {ms}')
+                raise Exception(f'Same {repr(status)} | {ms}')
             if status_before is None:
                 status_before = status
 
@@ -79,8 +79,6 @@ class CSVCandles:
                     complete_candles = Candles([c for c in candles if c.is_complete])
                     if complete_candles:
                         await csv._append(complete_candles)
-
-                    return candles_from_file + candles
                 case CSVCandlesStatus.NEED_INSERT:
                     to_temp = r[0]
                     logging.debug(f'{ms} need_insert. from={dt_form_sys.datetime_strf(from_)} | '
@@ -167,10 +165,13 @@ class CSVCandles:
                 candle = Candle(*values, is_complete=True)
 
                 if i == 0 and candle.time > from_:
-                    if not interval == interval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date():
+                    if not (interval == CandleInterval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date()):
                         return CSVCandlesStatus.NEED_INSERT, candle.time
                 if i == len(data) - 1 and candle.time < to:
-                    if not interval == interval.CANDLE_INTERVAL_DAY:
+                    dt_delta = to - candle.time
+                    if interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or (
+                            interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1)
+                    ):
                         return CSVCandlesStatus.NEED_APPEND, candle.time, candles
 
                 if from_ <= candle.time <= to:
@@ -199,5 +200,3 @@ class CSVCandles:
                 raise UnexpectedCandleInterval(f'{interval=}')
 
         return dir_ / f'{instrument.uid}.csv'
-
-
