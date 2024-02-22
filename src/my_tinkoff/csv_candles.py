@@ -54,7 +54,7 @@ class CSVCandles:
             if status == status_before:
                 if status == CSVCandlesStatus.NEED_INSERT:
                     raise IncorrectFirstCandle(f'{r[0]=} | {from_=}')
-                raise Exception(f'Same {repr(status)} | {ms}')
+                raise Exception(f'Same {status=} | {ms}')
             if status_before is None:
                 status_before = status
 
@@ -169,8 +169,10 @@ class CSVCandles:
                         return CSVCandlesStatus.NEED_INSERT, candle.time
                 if i == len(data) - 1 and candle.time < to:
                     dt_delta = to - candle.time
-                    if interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or (
-                            interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1)
+                    if candle.time.date() == to.date() and (
+                            interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or
+                            interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
+                            interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
                     ):
                         return CSVCandlesStatus.NEED_APPEND, candle.time, candles
 
