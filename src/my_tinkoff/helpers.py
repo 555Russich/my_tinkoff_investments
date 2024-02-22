@@ -10,7 +10,6 @@ from tinkoff.invest import (
     MoneyValue,
 )
 
-from my_tinkoff.api_calls.market_data import get_candles
 from my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
 from my_tinkoff.schemas import Candle
 from my_tinkoff.exceptions import (
@@ -25,6 +24,8 @@ async def configure_datetime_range(
         to: datetime,
         interval: CandleInterval
 ) -> tuple[datetime, datetime]:
+    from my_tinkoff.api_calls.market_data import get_candles
+
     is_from_defined, is_to_defined = False, False
     delta = timedelta(days=15)
 
@@ -54,7 +55,7 @@ async def configure_datetime_range(
 
     while not is_from_defined:
         candles = await get_candles(
-            figi=instrument.figi,
+            instrument_id=instrument.uid,
             from_=from_temp, to=to_temp,
             delta=delta * 2,
             interval=CandleInterval.CANDLE_INTERVAL_DAY,
@@ -88,7 +89,7 @@ async def configure_datetime_range(
 
     while not is_to_defined:
         candles = await get_candles(
-            figi=instrument.figi,
+            instrument_id=instrument.uid,
             from_=from_temp, to=to_temp,
             delta=delta * 2,
             interval=CandleInterval.CANDLE_INTERVAL_DAY,
@@ -161,3 +162,13 @@ def convert_candle(candle: HistoricCandle) -> Candle:
         candle.time,
         candle.is_complete
     )
+
+
+def get_delta_by_interval(interval: CandleInterval) -> timedelta:
+    match interval:
+        case CandleInterval.CANDLE_INTERVAL_DAY:
+            return timedelta(days=365)
+        case CandleInterval.CANDLE_INTERVAL_1_MIN:
+            return timedelta(days=1)
+        case _:
+            raise UnexpectedCandleInterval(interval)

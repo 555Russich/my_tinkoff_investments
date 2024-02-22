@@ -6,6 +6,7 @@ from tinkoff.invest import (
     Instrument,
     Dividend,
     InstrumentIdType,
+    TradingSchedule,
 )
 from tinkoff.invest.exceptions import AioRequestError
 
@@ -44,5 +45,5 @@ async def get_trading_schedules(
         from_: datetime | None = None,
         to: datetime | None = None,
         client: AsyncServices = None
-) -> None:
-    return await client.instruments.trading_schedules(exchange=exchange, from_=from_, to=to)
+) -> list[TradingSchedule]:
+    return (await client.instruments.trading_schedules(exchange=exchange, from_=from_, to=to)).exchanges

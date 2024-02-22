@@ -4,7 +4,7 @@ from collections import UserList
 from typing import Self
 
 from tinkoff.invest import Instrument, Share
-from my_tinkoff.enums import Board
+from my_tinkoff.enums import ClassCode
 
 
 @dataclass(frozen=True)
@@ -61,6 +61,6 @@ class Instruments(UserList[Instrument]):
 
 class Shares(Instruments[Share]):
     @classmethod
-    async def from_board(cls, board: Board) -> Self:
+    async def from_board(cls, board: ClassCode) -> Self:
         from my_tinkoff.api_calls.instruments import get_shares
         return cls([s for s in await get_shares() if s.class_code == board.value])

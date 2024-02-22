@@ -2,19 +2,22 @@ import logging
 from datetime import datetime, timedelta
 
 from tinkoff.invest.async_services import AsyncServices
-from tinkoff.invest import CandleInterval
 from tinkoff.invest.exceptions import AioRequestError
+from tinkoff.invest import (
+    CandleInterval,
+    GetTradingStatusResponse,
+)
 from grpc import StatusCode
 
 from my_tinkoff.token_manager import token_controller
-from my_tinkoff.helpers import convert_candle
-from my_tinkoff.exceptions import ResourceExhausted, UnexpectedCandleInterval
+from my_tinkoff.helpers import convert_candle, get_delta_by_interval
+from my_tinkoff.exceptions import ResourceExhausted
 from my_tinkoff.schemas import Candles
 
 
 @token_controller()
 async def get_candles(
-        figi: str,
+        instrument_id: str,
         from_: datetime,
         to: datetime,
         interval: CandleInterval,
@@ -22,7 +25,7 @@ async def get_candles(
         client: AsyncServices = None
 ) -> Candles:
     if delta is None:
-        delta = _get_delta_by_interval(interval)
+        delta = get_delta_by_interval(interval)
 
     candles = Candles()
     while True:
@@ -34,7 +37,7 @@ async def get_candles(
 
         try:
             r = await client.market_data.get_candles(
-                figi=figi, interval=interval,
+                instrument_id=instrument_id, interval=interval,
                 from_=from_, to=to_temp
             )
             candles += [convert_candle(candle) for candle in r.candles if candle.time <= to_temp]
@@ -54,11 +57,6 @@ async def get_candles(
             return candles
 
 
-def _get_delta_by_interval(interval: CandleInterval) -> timedelta:
-    match interval:
-        case CandleInterval.CANDLE_INTERVAL_DAY:
-            return timedelta(days=365)
-        case CandleInterval.CANDLE_INTERVAL_1_MIN:
-            return timedelta(days=1)
-        case _:
-            raise UnexpectedCandleInterval(interval)
+@token_controller(single_response=True)
+async def get_trading_status(instrument_id: str, client: AsyncServices = None) -> GetTradingStatusResponse:
+    return await client.market_data.get_trading_status(instrument_id=instrument_id)

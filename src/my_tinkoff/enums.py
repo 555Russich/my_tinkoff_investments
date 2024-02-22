@@ -1,5 +1,5 @@
 from enum import StrEnum
 
 
-class Board(StrEnum):
+class ClassCode(StrEnum):
     TQBR: str = 'TQBR'
