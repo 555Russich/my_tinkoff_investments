@@ -11,13 +11,17 @@ from tinkoff.invest import (
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY # noqa
 from my_tinkoff.schemas import Candle, Candles, CSVCandlesStatus
-from my_tinkoff.helpers import configure_datetime_range
+from my_tinkoff.helpers import (
+    get_first_available_candle,
+    check_first_candle_availability
+)
 from my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
 from my_tinkoff.api_calls.market_data import get_candles
 from my_tinkoff.api_calls.instruments import get_shares
 from my_tinkoff.exceptions import (
     IncorrectFirstCandle,
-    UnexpectedCandleInterval
+    UnexpectedCandleInterval,
+    RequestedCandleOutOfRange
 )
 
 
@@ -38,7 +42,14 @@ class CSVCandles:
             to: datetime,
             interval: CandleInterval,
     ) -> Candles:
-        from_, to = await configure_datetime_range(instrument, from_=from_, to=to, interval=interval)
+        try:
+            check_first_candle_availability(instrument=instrument, interval=interval)
+        except RequestedCandleOutOfRange as ex:
+            logging.warning(f'ticker={instrument.ticker} from_={dt_form_sys.datetime_strf(from_)} < first_candle='
+                            f'{dt_form_sys.datetime_strf(ex.dt_first_available_candle)}')
+            from_ = ex.dt_first_available_candle
+
+
         filepath = cls.get_filepath(instrument, interval=interval)
         csv = cls(filepath)
         status_before = None
