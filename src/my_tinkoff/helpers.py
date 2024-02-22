@@ -46,7 +46,6 @@ async def configure_datetime_range(
     if to > DateTimeFactory.now():
         logging.warning(f'to can\'t be later than datetime now...')
         to = DateTimeFactory.now()
-        is_to_defined = True
 
     # check if from_ was trading day OR find the closest early day before
     from_temp = from_ - delta
