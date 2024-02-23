@@ -9,10 +9,7 @@ from tinkoff.invest import AsyncClient
 from my_tinkoff.exceptions import ResourceExhausted
 from my_tinkoff.date_utils import DateTimeFactory, is_minute_passed
 from my_tinkoff.schemas import Candles
-try:
-    from config import TOKENS_FULL_ACCESS, TOKENS_READ_ONLY  # noqa
-except ImportError:
-    from tests.test_config import TOKENS_FULL_ACCESS, TOKENS_READ_ONLY
+from config import TOKENS_FULL_ACCESS, TOKENS_READ_ONLY  # noqa
 
 
 class TokenManager:
