@@ -127,6 +127,17 @@ def get_opposite_direction(direction: TradeDirection) -> TradeDirection:
         return TradeDirection.TRADE_DIRECTION_SELL
 
 
+def configure_datetime_from(from_: datetime, instrument: Instrument, interval: CandleInterval) -> datetime:
+    try:
+        check_first_candle_availability(instrument=instrument, dt=from_, interval=interval)
+        from_configured = from_
+    except RequestedCandleOutOfRange as ex:
+        logging.warning(f'ticker={instrument.ticker} from_={dt_form_sys.datetime_strf(from_)} < first_candle='
+                        f'{dt_form_sys.datetime_strf(ex.dt_first_available_candle)}')
+        from_configured = ex.dt_first_available_candle
+    return from_configured
+
+
 def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> None:
     if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
         if dt < instrument.first_1min_candle_date:
