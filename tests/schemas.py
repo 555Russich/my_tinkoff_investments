@@ -1,0 +1,24 @@
+from datetime import datetime
+from dataclasses import dataclass
+from pathlib import Path
+
+from tinkoff.invest import CandleInterval
+
+
+@dataclass(frozen=True)
+class InstrumentInfo:
+    ticker: str
+    uid: str
+    class_code: str
+    exchange: str
+
+
+@dataclass(frozen=True)
+class CandlesTestCase:
+    filepath: Path
+    dt_from: datetime
+    dt_to: datetime
+    count_candles: int
+    dt_first_candle: datetime
+    dt_last_candle: datetime
+    interval: CandleInterval = CandleInterval.CANDLE_INTERVAL_1_MIN

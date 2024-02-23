@@ -44,17 +44,6 @@ class Candles(UserList[Candle]):
         return self.__class__([c for c in self if c.time.weekday() not in (5, 6)])
 
 
-@dataclass(frozen=True, init=False)
-class CSVCandlesStatus:
-    UNDEFINED = -1
-    OK = 0
-    NOT_EXISTS = 1
-    NEED_APPEND = 2
-    NEED_INSERT = 3
-    TICKER_CHANGED = 5
-    FIGI_CHANGED = 6
-
-
 class Instruments(UserList[Instrument]):
     pass
 

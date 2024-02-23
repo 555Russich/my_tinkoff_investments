@@ -1,3 +1,4 @@
+import pytest
 from datetime import timedelta
 
 from tinkoff.invest import (
@@ -15,7 +16,7 @@ from my_tinkoff.api_calls.instruments import (
 from my_tinkoff.schemas import Shares
 from my_tinkoff.date_utils import DateTimeFactory
 
-from tests.dataset import Dataset
+from tests.dataset import test_instruments, SBER
 
 
 async def test_get_shares():
@@ -23,24 +24,25 @@ async def test_get_shares():
     assert isinstance(shares, Shares)
 
 
-async def test_get_instrument_by_ticker() -> None:
+@pytest.mark.parametrize('instrument_data', test_instruments)
+async def test_get_instrument_by_ticker(instrument_data) -> None:
     instrument = await get_instrument_by(
-        id=Dataset.TICKER,
+        id=instrument_data.ticker,
         id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
-        class_code=Dataset.CLASS_CODE
+        class_code=instrument_data.class_code
     )
-    print(instrument)
-    print(instrument.first_1min_candle_date)
+    # print(instrument)
+    # print(instrument.first_1min_candle_date)
     assert isinstance(instrument, Instrument)
-    assert instrument.ticker == Dataset.TICKER
-    assert instrument.class_code == Dataset.CLASS_CODE
+    assert instrument.ticker == instrument_data.ticker
+    assert instrument.class_code == instrument_data.class_code
 
 
 async def test_get_dividends() -> None:
     instrument = await get_instrument_by(
-        id=Dataset.TICKER,
+        id=SBER.ticker,
         id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
-        class_code=Dataset.CLASS_CODE
+        class_code=SBER.class_code
     )
 
     dividends = await get_dividends(

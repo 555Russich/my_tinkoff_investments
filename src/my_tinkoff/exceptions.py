@@ -1,6 +1,9 @@
 from datetime import datetime
 
+from tinkoff.invest import Instrument
+
 from my_tinkoff.schemas import Candles
+from my_tinkoff.date_utils import dt_form_sys
 
 
 class TinkoffAPIError(Exception):
@@ -45,3 +48,18 @@ class InstrumentHasChanged(Exception):
     def __int__(self, ticker: str = None, figi: str = None):
         self.ticker = ticker
         self.figi = figi
+
+
+class CSVCandlesError(Exception):
+    pass
+
+
+class CSVCandlesNeedInsert(CSVCandlesError):
+    def __init__(self, to_temp: datetime):
+        self.to_temp = to_temp
+
+
+class CSVCandlesNeedAppend(CSVCandlesError):
+    def __init__(self, from_temp: datetime, candles: Candles):
+        self.from_temp = from_temp
+        self.candles = candles

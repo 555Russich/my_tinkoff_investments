@@ -33,7 +33,7 @@ async def get_candles(
         if to_temp > to:
             to_temp = to
 
-        logging.debug(f'{len(candles)=} | {from_} | {to_temp} | {to}')
+        logging.debug(f'{len(candles)=} | from_={from_} | to_temp={to_temp} | to={to}')
 
         try:
             r = await client.market_data.get_candles(

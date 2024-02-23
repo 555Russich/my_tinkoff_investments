@@ -1,27 +1,25 @@
 import logging
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Any
 
 from tinkoff.invest import (
     CandleInterval,
     Instrument,
     InstrumentType
 )
+import aiofiles
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY # noqa
-from my_tinkoff.schemas import Candle, Candles, CSVCandlesStatus
-from my_tinkoff.helpers import (
-    get_first_available_candle,
-    check_first_candle_availability
-)
+from my_tinkoff.schemas import Candle, Candles
+from my_tinkoff.helpers import configure_datetime_from
 from my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
 from my_tinkoff.api_calls.market_data import get_candles
 from my_tinkoff.api_calls.instruments import get_shares
 from my_tinkoff.exceptions import (
     IncorrectFirstCandle,
     UnexpectedCandleInterval,
-    RequestedCandleOutOfRange
+    CSVCandlesNeedInsert,
+    CSVCandlesNeedAppend,
 )
 
 
@@ -42,61 +40,51 @@ class CSVCandles:
             to: datetime,
             interval: CandleInterval,
     ) -> Candles:
-        try:
-            check_first_candle_availability(instrument=instrument, interval=interval)
-        except RequestedCandleOutOfRange as ex:
-            logging.warning(f'ticker={instrument.ticker} from_={dt_form_sys.datetime_strf(from_)} < first_candle='
-                            f'{dt_form_sys.datetime_strf(ex.dt_first_available_candle)}')
-            from_ = ex.dt_first_available_candle
-
+        candles = None
+        from_ = configure_datetime_from(from_=from_, instrument=instrument, interval=interval)
 
         filepath = cls.get_filepath(instrument, interval=interval)
+        logging.debug(f'PATH: {filepath}')
         csv = cls(filepath)
-        status_before = None
 
-        while True:
+        if not filepath.exists():
+            logging.debug(f'File not exists | ticker={instrument.ticker} | uid={instrument.uid}')
+            await csv._prepare_new()
+            candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=to, interval=interval)
+            await csv._append(candles)
+            return candles
+
+        for retry in range(1, 3):
             try:
-                status, *r = await csv._status(from_=from_, to=to, interval=interval)
-            except Exception as ex:
-                logging.error(f'{filepath=}')
-                raise ex
-
-            ms = f'{instrument.ticker=} | {instrument.uid=} | StatusHistoryInCSV: '
-            if status == status_before:
-                if status == CSVCandlesStatus.NEED_INSERT:
-                    raise IncorrectFirstCandle(f'{r[0]=} | {from_=}')
-                raise Exception(f'Same {status=} | {ms}')
-            if status_before is None:
-                status_before = status
-
-            match status:
-                case CSVCandlesStatus.OK:
-                    logging.debug(ms + 'OK')
-                    return r[0]
-                case CSVCandlesStatus.NOT_EXISTS:
-                    logging.debug(ms + 'not_exists')
-                    await csv._prepare_new()
-                    candles = await get_candles(instrument.figi, from_=from_, to=to, interval=interval)
+                return await csv._read(from_=from_, to=to, interval=interval)
+            except CSVCandlesNeedAppend as ex:
+                logging.debug(f'Need append | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} | from_temp='
+                              f'{dt_form_sys.datetime_strf(ex.from_temp)} | to={dt_form_sys.datetime_strf(to)}')
+                # 1st candle in response is last candle in file
+                candles = (await get_candles(instrument_id=instrument.uid, from_=ex.from_temp, to=to, interval=interval))[1:]
+                if candles:
+                    candles = candles if candles[-1].is_complete else candles[:1]
                     await csv._append(candles)
-                    return Candles(candles)
-                case CSVCandlesStatus.NEED_APPEND:
-                    from_temp, candles_from_file = r
-                    logging.debug(f'{ms} need_append. from_temp={dt_form_sys.datetime_strf(from_temp)} | '
-                                  f'to={dt_form_sys.datetime_strf(to)}')
-                    # 1st candle in response is last candle in file
-                    candles = (await get_candles(instrument.figi, from_=from_temp, to=to, interval=interval))[1:]
+                else:
+                    to = ex.candles[-1].time if to > ex.candles[-1].time else to
+            except CSVCandlesNeedInsert as ex:
+                logging.debug(f'Need insert | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} |'
+                              f' from={dt_form_sys.datetime_strf(from_)} | '
+                              f'to_temp={dt_form_sys.datetime_strf(ex.to_temp)}')
+                if retry == 2:
+                    raise IncorrectFirstCandle(f'{candles[0].time=} | {from_=}')
 
-                    # append to file only completed candles
-                    complete_candles = Candles([c for c in candles if c.is_complete])
-                    if complete_candles:
-                        await csv._append(complete_candles)
-                case CSVCandlesStatus.NEED_INSERT:
-                    to_temp = r[0]
-                    logging.debug(f'{ms} need_insert. from={dt_form_sys.datetime_strf(from_)} | '
-                                  f'to_temp={dt_form_sys.datetime_strf(to_temp)}')
-                    candles_ = await get_candles(instrument.figi, from_=from_, to=to_temp, interval=interval)
+                candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=ex.to_temp, interval=interval)
+                if candles:
                     # 1st candle in file is last candle in get_candles response
-                    await csv._insert(candles_[:-1])
+                    await csv._insert(candles[:-1])
+                else:
+                    logging.debug(f'Nothing between from_={dt_form_sys.datetime_strf(from_)} and to_temp='
+                                  f'{dt_form_sys.datetime_strf(ex.to_temp)}')
+                    from_ = ex.to_temp
+            except Exception as ex:
+                logging.error(f'{retry=} | {csv.filepath} | {instrument.ticker=}\n{ex}', exc_info=True)
+                raise ex
 
     @classmethod
     async def get_all_instrument_history(cls, instrument: Instrument, interval: CandleInterval) -> Candles:
@@ -113,7 +101,11 @@ class CSVCandles:
             instrument=instrument, from_=from_, to=DateTimeFactory.now(), interval=interval)
 
     @classmethod
-    async def get_all_instruments_by_type(cls, instruments_type: InstrumentType, interval: CandleInterval) -> None:
+    async def get_all_instruments_histories_by_type(
+            cls,
+            instruments_type: InstrumentType,
+            interval: CandleInterval
+    ) -> None:
         match instruments_type:
             case InstrumentType.INSTRUMENT_TYPE_SHARE:
                 instruments = await get_shares()
@@ -130,34 +122,22 @@ class CSVCandles:
             except IncorrectFirstCandle as e:
                 logging.warning(e, exc_info=True)
 
-    async def _append(self, candles: Candles) -> None:
-        if not candles:
-            return
-        candles = candles.remove_same_candles_in_a_row()
+    @classmethod
+    def get_filepath(cls, instrument: Instrument, interval: CandleInterval) -> Path:
+        if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
+            dir_ = DIR_CANDLES_1MIN
+        elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
+            dir_ = DIR_CANDLES_1DAY
+        else:
+            raise UnexpectedCandleInterval(f'{interval=}')
 
-        data = NEW_LINE.join(
-            DELIMITER.join(
-                str(v) for v in (candle.open, candle.high, candle.low, candle.close, candle.volume, candle.time)
-            ) for candle in candles
-        ) + NEW_LINE
+        return dir_ / f'{instrument.uid}.csv'
 
-        with open(self.filepath, 'a') as f:
-            f.write(data)
-
-    async def _insert(self, candles: Candles):
-        with open(self.filepath, 'r') as f:
-            data = f.readlines()
-
-        await self._prepare_new()
-        await self._append(candles)
-        with open(self.filepath, 'a') as f:
-            f.writelines(data[1:])
-
-    async def _read(self, from_: datetime, to: datetime, interval: CandleInterval) -> tuple:
+    async def _read(self, from_: datetime, to: datetime, interval: CandleInterval) -> Candles:
         candles = Candles()
 
-        with open(self.filepath, 'r') as f:
-            data = f.readlines()
+        async with aiofiles.open(self.filepath, 'r') as f:
+            data = await f.readlines()
             columns = data[0].replace(NEW_LINE, '').split(DELIMITER)
             data = data[1:]
 
@@ -174,10 +154,12 @@ class CSVCandles:
                         values.append(datetime.fromisoformat(value))
 
                 candle = Candle(*values, is_complete=True)
+                if from_ <= candle.time <= to:
+                    candles.append(candle)
 
                 if i == 0 and candle.time > from_:
                     if not (interval == CandleInterval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date()):
-                        return CSVCandlesStatus.NEED_INSERT, candle.time
+                        raise CSVCandlesNeedInsert(to_temp=candle.time)
                 if i == len(data) - 1 and candle.time < to:
                     dt_delta = to - candle.time
                     if candle.time.date() == to.date() and (
@@ -185,31 +167,31 @@ class CSVCandles:
                             interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
                             interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
                     ):
-                        return CSVCandlesStatus.NEED_APPEND, candle.time, candles
+                        raise CSVCandlesNeedAppend(from_temp=candle.time, candles=candles)
+        return candles
 
-                if from_ <= candle.time <= to:
-                    candles.append(candle)
+    async def _append(self, candles: Candles) -> None:
+        if not candles:
+            return
 
-        return CSVCandlesStatus.OK, candles
+        data = NEW_LINE.join(
+            DELIMITER.join(
+                str(v) for v in (candle.open, candle.high, candle.low, candle.close, candle.volume, candle.time)
+            ) for candle in candles
+        ) + NEW_LINE
+
+        async with aiofiles.open(self.filepath, 'a') as f:
+            await f.write(data)
+
+    async def _insert(self, candles: Candles):
+        async with aiofiles.open(self.filepath, 'r') as f:
+            data = await f.readlines()
+
+        await self._prepare_new()
+        await self._append(candles)
+        async with aiofiles.open(self.filepath, 'a') as f:
+            await f.writelines(data[1:])
 
     async def _prepare_new(self):
-        with open(self.filepath, 'w') as f:
-            f.write(DELIMITER.join(COLUMNS) + NEW_LINE)
-
-    async def _status(self, from_: datetime, to: datetime, interval: CandleInterval) -> tuple[CSVCandlesStatus, Any]:
-        if not self.filepath.exists():
-            return CSVCandlesStatus.NOT_EXISTS, None
-
-        return await self._read(from_, to, interval=interval)
-
-    @classmethod
-    def get_filepath(cls, instrument: Instrument, interval: CandleInterval) -> Path:
-        match interval:
-            case interval.CANDLE_INTERVAL_1_MIN:
-                dir_ = DIR_CANDLES_1MIN
-            case interval.CANDLE_INTERVAL_DAY:
-                dir_ = DIR_CANDLES_1DAY
-            case _:
-                raise UnexpectedCandleInterval(f'{interval=}')
-
-        return dir_ / f'{instrument.uid}.csv'
+        async with aiofiles.open(self.filepath, 'w') as f:
+            await f.write(DELIMITER.join(COLUMNS) + NEW_LINE)
