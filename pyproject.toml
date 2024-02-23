@@ -10,5 +10,6 @@ dependencies = [
     'tinkoff-investments',
     'python-dotenv',
     'tzdata',
+    'aiofiles',
 ]
 description = 'Wrapper package for tinkoff-investments'
