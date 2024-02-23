@@ -15,7 +15,6 @@ from my_tinkoff.api_calls.instruments import (
 )
 from my_tinkoff.schemas import Shares
 from my_tinkoff.date_utils import DateTimeFactory
-
 from tests.dataset import test_instruments, SBER
 
 
@@ -31,7 +30,7 @@ async def test_get_instrument_by_ticker(instrument_data) -> None:
         id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
         class_code=instrument_data.class_code
     )
-    # print(instrument)
+    print(instrument)
     # print(instrument.first_1min_candle_date)
     assert isinstance(instrument, Instrument)
     assert instrument.ticker == instrument_data.ticker
@@ -39,15 +38,9 @@ async def test_get_instrument_by_ticker(instrument_data) -> None:
 
 
 async def test_get_dividends() -> None:
-    instrument = await get_instrument_by(
-        id=SBER.ticker,
-        id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER,
-        class_code=SBER.class_code
-    )
-
     dividends = await get_dividends(
-        instrument=instrument,
-        from_=instrument.first_1day_candle_date,
+        instrument_id=SBER.uid,
+        from_=SBER.first_1day_candle_date,
         to=DateTimeFactory.now()
     )
     assert isinstance(dividends, list)

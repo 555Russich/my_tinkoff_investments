@@ -9,7 +9,8 @@ SBER = InstrumentInfo(
     ticker='SBER',
     uid='e6123145-9665-43e0-8413-cd61b8aa9b13',
     class_code='TQBR',
-    exchange='MOEX_EVENING_WEEKEND'
+    exchange='MOEX_EVENING_WEEKEND',
+    first_1day_candle_date=datetime(2000, 1, 4, 7, 0, tzinfo=TZ_UTC)
 )
 CNTL = InstrumentInfo(
     ticker='CNTL',

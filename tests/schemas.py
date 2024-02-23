@@ -11,6 +11,7 @@ class InstrumentInfo:
     uid: str
     class_code: str
     exchange: str
+    first_1day_candle_date: datetime | None = None
 
 
 @dataclass(frozen=True)

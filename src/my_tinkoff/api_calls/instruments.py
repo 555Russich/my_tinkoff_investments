@@ -34,9 +34,9 @@ async def get_instrument_by(
 
 
 @token_controller()
-async def get_dividends(instrument: Instrument, from_: datetime,
+async def get_dividends(instrument_id: str, from_: datetime,
                         to: datetime, client: AsyncServices = None) -> list[Dividend]:
-    return (await client.instruments.get_dividends(figi=instrument.figi, from_=from_, to=to)).dividends
+    return (await client.instruments.get_dividends(instrument_id=instrument_id, from_=from_, to=to)).dividends
 
 
 @token_controller(single_response=True)
