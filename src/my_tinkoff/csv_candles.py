@@ -44,7 +44,6 @@ class CSVCandles:
         from_ = configure_datetime_from(from_=from_, instrument=instrument, interval=interval)
 
         filepath = cls.get_filepath(instrument, interval=interval)
-        logging.debug(f'PATH: {filepath}')
         csv = cls(filepath)
 
         if not filepath.exists():
