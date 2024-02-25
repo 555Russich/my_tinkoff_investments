@@ -42,7 +42,7 @@ class Candles(UserList[Candle]):
         return new_candles
 
     def remove_weekend_and_holidays_candles(self) -> Self:
-        return self.__class__([c for c in self if c.time.weekday() not in (5, 6) or c.time.date() not in ru_holidays])
+        return self.__class__([c for c in self if c.time.weekday() not in (5, 6) and c.time.date() not in ru_holidays])
 
     def remove_weekend_candles(self) -> Self:
         return self.__class__([c for c in self if c.time.weekday() not in (5, 6)])
