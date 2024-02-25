@@ -11,5 +11,6 @@ dependencies = [
     'python-dotenv',
     'tzdata',
     'aiofiles',
+    'holidays'
 ]
 description = 'Wrapper package for tinkoff-investments'

@@ -2,10 +2,13 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-ISO_FORMAT = '%Y-%m-%d %H:%M:%S%z'
+import holidays
 
+ISO_FORMAT = '%Y-%m-%d %H:%M:%S%z'
 TZ_MOSCOW = ZoneInfo('Europe/Moscow')
 TZ_UTC = ZoneInfo('UTC')
+
+ru_holidays = holidays.country_holidays('RU', years=([x for x in range(1970, datetime.now().year+5)]))
 
 
 class DateTimeFactory:
