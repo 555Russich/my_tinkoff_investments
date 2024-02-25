@@ -5,6 +5,7 @@ from typing import Self
 
 from tinkoff.invest import Instrument, Share
 from my_tinkoff.enums import ClassCode
+from my_tinkoff.date_utils import ru_holidays
 
 
 @dataclass(frozen=True)
@@ -40,9 +41,14 @@ class Candles(UserList[Candle]):
         new_candles.append(self[-1])
         return new_candles
 
+    def remove_weekend_and_holidays_candles(self) -> Self:
+        return self.__class__([c for c in self if c.time.weekday() not in (5, 6) or c.time.date() not in ru_holidays])
+
     def remove_weekend_candles(self) -> Self:
         return self.__class__([c for c in self if c.time.weekday() not in (5, 6)])
 
+    def remove_holidays_candles(self) -> Self:
+        return self.__class__([c for c in self if c.time.date() not in ru_holidays])
 
 class Instruments(UserList[Instrument]):
     pass
