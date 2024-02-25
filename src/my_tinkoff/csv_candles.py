@@ -53,7 +53,7 @@ class CSVCandles:
             await csv._append(candles)
             return candles
 
-        for retry in range(1, 3):
+        for retry in range(1, 4):
             try:
                 return await csv._read(from_=from_, to=to, interval=interval)
             except CSVCandlesNeedAppend as ex:
@@ -70,7 +70,7 @@ class CSVCandles:
                 logging.debug(f'Need insert | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} |'
                               f' from={dt_form_sys.datetime_strf(from_)} | '
                               f'to_temp={dt_form_sys.datetime_strf(ex.to_temp)}')
-                if retry == 2:
+                if retry == 3:
                     raise IncorrectFirstCandle(f'{candles[0].time=} | {from_=}')
 
                 candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=ex.to_temp, interval=interval)
