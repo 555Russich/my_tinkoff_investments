@@ -9,6 +9,10 @@ TZ_MOSCOW = ZoneInfo('Europe/Moscow')
 TZ_UTC = ZoneInfo('UTC')
 
 ru_holidays = holidays.country_holidays('RU', years=([x for x in range(1970, datetime.now().year+5)]))
+ru_holidays = [
+    dt for dt in ru_holidays
+    if not (dt.month == 1 and dt.day in [3, 4, 5, 6, 7, 8])
+]
 
 
 class DateTimeFactory:
