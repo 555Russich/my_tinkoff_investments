@@ -21,7 +21,7 @@ def mock_get_filepath(filepath) -> callable:
 
 
 @pytest.mark.parametrize("instrument,case", dataset_candles)
-async def test_download_or_read_full_range_exists(instrument, case):
+async def test_download_or_read(instrument, case):
     CSVCandles.get_filepath = mock_get_filepath(case.filepath)
     instrument = await get_instrument_by(id=instrument.uid, id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_UID)
     candles = await CSVCandles.download_or_read(instrument=instrument, from_=case.dt_from,
