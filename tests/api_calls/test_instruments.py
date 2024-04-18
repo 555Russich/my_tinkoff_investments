@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from tinkoff.invest import (
     Instrument,
+    InstrumentType,
     InstrumentIdType,
     TradingSchedule
 )
@@ -12,6 +13,9 @@ from my_tinkoff.api_calls.instruments import (
     get_dividends,
     get_instrument_by,
     get_trading_schedules,
+    find_instrument,
+    get_future_by,
+    get_futures,
 )
 from my_tinkoff.schemas import Shares
 from my_tinkoff.date_utils import DateTimeFactory
@@ -51,3 +55,20 @@ async def test_get_trading_schedules() -> None:
     r = await get_trading_schedules(from_=now, to=now + timedelta(days=2))
     assert isinstance(r, list)
     assert isinstance(r[0], TradingSchedule)
+
+
+async def test_find_instrument() -> None:
+    r = await find_instrument(query=SBER.ticker, instrument_kind=InstrumentType.INSTRUMENT_TYPE_SHARE)
+    print(r)
+
+
+async def test_get_future_by() -> None:
+    r = await get_future_by(id='SBER', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='TQBR')
+    print(r)
+
+
+async def test_get_futures() -> None:
+    r = await get_futures()
+    for future in r:
+        if future.basic_asset == SBER.ticker:
+            print(future)

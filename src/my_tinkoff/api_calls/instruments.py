@@ -7,6 +7,10 @@ from tinkoff.invest import (
     Dividend,
     InstrumentIdType,
     TradingSchedule,
+    InstrumentType,
+    InstrumentShort,
+    InstrumentStatus,
+    Future,
 )
 from tinkoff.invest.exceptions import AioRequestError
 
@@ -47,3 +51,32 @@ async def get_trading_schedules(
         client: AsyncServices = None
 ) -> list[TradingSchedule]:
     return (await client.instruments.trading_schedules(exchange=exchange, from_=from_, to=to)).exchanges
+
+
+@token_controller(single_response=True)
+async def find_instrument(
+        query: str,
+        instrument_kind: InstrumentType | None = None,
+        api_trade_available_flag: bool | None = None,
+        client: AsyncServices = None
+) -> list[InstrumentShort]:
+    return (await client.instruments.find_instrument(query=query, instrument_kind=instrument_kind,
+                                                     api_trade_available_flag=api_trade_available_flag)).instruments
+
+
+@token_controller(single_response=True)
+async def get_future_by(
+        id: str,
+        id_type: InstrumentIdType | None = None,
+        class_code: str | None = None,
+        client: AsyncServices = None
+) -> Future:
+    return (await client.instruments.future_by(id=id, id_type=id_type, class_code=class_code)).instrument
+
+
+@token_controller(single_response=True)
+async def get_futures(
+        instrument_status: InstrumentStatus = InstrumentStatus(0),
+        client: AsyncServices = None
+) -> list[Future]:
+    return (await client.instruments.futures(instrument_status=instrument_status)).instruments
