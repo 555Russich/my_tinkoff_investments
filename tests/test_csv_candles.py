@@ -1,17 +1,10 @@
-import logging
-from datetime import timedelta
-
 import pytest
-from tinkoff.invest import (
-    InstrumentIdType,
-    CandleInterval,
-)
+from tinkoff.invest import InstrumentIdType
 
 from my_tinkoff.csv_candles import CSVCandles
 from my_tinkoff.api_calls.instruments import get_instrument_by
-from my_tinkoff.date_utils import DateTimeFactory
 
-from tests.dataset import dataset_candles, CNTL
+from tests.dataset import dataset_candles
 
 
 def mock_get_filepath(filepath) -> callable:
