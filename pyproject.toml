@@ -14,3 +14,7 @@ dependencies = [
     'holidays'
 ]
 description = 'Wrapper package for tinkoff-investments'
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+

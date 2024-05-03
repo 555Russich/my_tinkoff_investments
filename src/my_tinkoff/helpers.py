@@ -10,9 +10,9 @@ from tinkoff.invest import (
     MoneyValue,
 )
 
-from my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
-from my_tinkoff.schemas import Candle
-from my_tinkoff.exceptions import (
+from src.my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
+from src.my_tinkoff.schemas import Candle
+from src.my_tinkoff.exceptions import (
     UnexpectedCandleInterval,
     RequestedCandleOutOfRange
 )
@@ -24,7 +24,7 @@ async def configure_datetime_range(
         to: datetime,
         interval: CandleInterval
 ) -> tuple[datetime, datetime]:
-    from my_tinkoff.api_calls.market_data import get_candles
+    from src.my_tinkoff.api_calls.market_data import get_candles
 
     is_from_defined, is_to_defined = False, False
     delta = timedelta(days=15)

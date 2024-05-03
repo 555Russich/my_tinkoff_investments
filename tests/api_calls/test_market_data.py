@@ -2,11 +2,11 @@ import pytest
 
 from tinkoff.invest import GetTradingStatusResponse
 
-from my_tinkoff.api_calls.market_data import (
+from src.my_tinkoff.api_calls.market_data import (
     get_candles,
     get_trading_status
 )
-from my_tinkoff.schemas import Candles, Candle
+from src.my_tinkoff.schemas import Candles, Candle
 from tests.dataset import SBER, dataset_candles
 
 

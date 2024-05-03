@@ -4,8 +4,8 @@ from collections import UserList
 from typing import Self, Literal
 
 from tinkoff.invest import Instrument, Share
-from my_tinkoff.enums import ClassCode
-from my_tinkoff.date_utils import ru_holidays
+from src.my_tinkoff.enums import ClassCode
+from src.my_tinkoff.date_utils import ru_holidays
 
 
 MathOperation = Literal['__add__', '__sub__', '__mul__', '__truediv__']
@@ -86,7 +86,7 @@ class Candle:
 
 class Candles(UserList[Candle]):
     def check_datetime_consistency(self) -> None:
-        from my_tinkoff.exceptions import IncorrectDatetimeConsistency
+        from src.my_tinkoff.exceptions import IncorrectDatetimeConsistency
 
         for i in range(1, len(self)):
             if self[i-1].time > self[i].time:
@@ -163,5 +163,5 @@ class Instruments(UserList[Instrument]):
 class Shares(Instruments[Share]):
     @classmethod
     async def from_board(cls, board: ClassCode) -> Self:
-        from my_tinkoff.api_calls.instruments import get_shares
+        from src.my_tinkoff.api_calls.instruments import get_shares
         return cls([s for s in await get_shares() if s.class_code == board.value])

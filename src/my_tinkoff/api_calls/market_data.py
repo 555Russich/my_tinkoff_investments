@@ -9,10 +9,10 @@ from tinkoff.invest import (
 )
 from grpc import StatusCode
 
-from my_tinkoff.token_manager import token_controller
-from my_tinkoff.helpers import convert_candle, get_delta_by_interval
-from my_tinkoff.exceptions import ResourceExhausted
-from my_tinkoff.schemas import Candles
+from src.my_tinkoff.token_manager import token_controller
+from src.my_tinkoff.helpers import convert_candle, get_delta_by_interval
+from src.my_tinkoff.exceptions import ResourceExhausted
+from src.my_tinkoff.schemas import Candles
 
 
 @token_controller()

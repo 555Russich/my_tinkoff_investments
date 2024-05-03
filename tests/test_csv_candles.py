@@ -1,8 +1,8 @@
 import pytest
 from tinkoff.invest import InstrumentIdType
 
-from my_tinkoff.csv_candles import CSVCandles
-from my_tinkoff.api_calls.instruments import get_instrument_by
+from src.my_tinkoff.csv_candles import CSVCandles
+from src.my_tinkoff.api_calls.instruments import get_instrument_by
 
 from tests.dataset import dataset_candles
 

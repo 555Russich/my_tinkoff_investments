@@ -8,7 +8,7 @@ from tinkoff.invest import (
     TradingSchedule
 )
 
-from my_tinkoff.api_calls.instruments import (
+from src.my_tinkoff.api_calls.instruments import (
     get_shares,
     get_dividends,
     get_instrument_by,
@@ -17,8 +17,8 @@ from my_tinkoff.api_calls.instruments import (
     get_future_by,
     get_futures,
 )
-from my_tinkoff.schemas import Shares
-from my_tinkoff.date_utils import DateTimeFactory
+from src.my_tinkoff.schemas import Shares
+from src.my_tinkoff.date_utils import DateTimeFactory
 from tests.dataset import test_instruments, SBER
 
 

@@ -16,7 +16,7 @@ from tinkoff.invest import (
 )
 from tinkoff.invest.async_services import AsyncServices
 
-from my_tinkoff.token_manager import token_controller
+from src.my_tinkoff.token_manager import token_controller
 
 
 async def _request_iterator(
