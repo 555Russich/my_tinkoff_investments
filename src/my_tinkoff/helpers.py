@@ -1,3 +1,4 @@
+
 import logging
 from datetime import datetime, timedelta
 
@@ -10,9 +11,9 @@ from tinkoff.invest import (
     MoneyValue,
 )
 
-from src.my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
-from src.my_tinkoff.schemas import Candle
-from src.my_tinkoff.exceptions import (
+from my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
+from my_tinkoff.schemas import Candle
+from my_tinkoff.exceptions import (
     UnexpectedCandleInterval,
     RequestedCandleOutOfRange
 )
@@ -24,7 +25,7 @@ async def configure_datetime_range(
         to: datetime,
         interval: CandleInterval
 ) -> tuple[datetime, datetime]:
-    from src.my_tinkoff.api_calls.market_data import get_candles
+    from my_tinkoff.api_calls.market_data import get_candles
 
     is_from_defined, is_to_defined = False, False
     delta = timedelta(days=15)
@@ -129,24 +130,25 @@ def get_opposite_direction(direction: TradeDirection) -> TradeDirection:
 
 def configure_datetime_from(from_: datetime, instrument: Instrument, interval: CandleInterval) -> datetime:
     try:
-        check_first_candle_availability(instrument=instrument, dt=from_, interval=interval)
-        from_configured = from_
+        return check_first_candle_availability(instrument=instrument, dt=from_, interval=interval)
     except RequestedCandleOutOfRange as ex:
         logging.warning(f'ticker={instrument.ticker} from_={dt_form_sys.datetime_strf(from_)} < first_candle='
                         f'{dt_form_sys.datetime_strf(ex.dt_first_available_candle)}')
-        from_configured = ex.dt_first_available_candle
-    return from_configured
+        return ex.dt_first_available_candle
 
 
-def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> None:
+def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> datetime:
     if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
         if dt < instrument.first_1min_candle_date:
             raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1min_candle_date)
     elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
-        if DateTimeFactory.replace_time(dt) < DateTimeFactory.replace_time(instrument.first_1day_candle_date):
+        dt = DateTimeFactory.replace_time(dt)
+        if dt < DateTimeFactory.replace_time(instrument.first_1day_candle_date):
             raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1day_candle_date)
     else:
         raise UnexpectedCandleInterval(repr(interval))
+
+    return dt
 
 
 def quotation2decimal(value: Quotation) -> float:
