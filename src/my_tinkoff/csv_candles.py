@@ -74,8 +74,10 @@ class CSVCandles:
                     raise IncorrectFirstCandle(f'{candles[0].time=} | {from_=}')
 
                 candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=ex.to_temp, interval=interval)
+                # 1st candle in file is last candle in get_candles response
+                candles = candles[:-1]
+                
                 if candles:
-                    # 1st candle in file is last candle in get_candles response
                     await csv._insert(candles[:-1])
                 else:
                     logging.debug(f'Nothing between from_={dt_form_sys.datetime_strf(from_)} and to_temp='
