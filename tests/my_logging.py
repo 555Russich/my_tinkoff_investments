@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-from src.my_tinkoff.date_utils import TZ_MOSCOW
+from my_tinkoff.date_utils import TZ_MOSCOW
 
 
 def get_logger(filepath: Path) -> None:

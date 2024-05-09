@@ -2,8 +2,8 @@ from datetime import datetime
 
 from tinkoff.invest import CandleInterval
 
-from src.my_tinkoff.date_utils import TZ_UTC
-from src.my_tinkoff.schemas import Candle, Candles
+from my_tinkoff.date_utils import TZ_UTC
+from my_tinkoff.schemas import Candle, Candles
 from tests.conftest import TEST_DIR_CANDLES
 from tests.schemas import InstrumentInfo, CandlesTestCase
 

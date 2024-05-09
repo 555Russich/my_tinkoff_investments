@@ -10,12 +10,12 @@ from tinkoff.invest import (
 import aiofiles
 
 from config import DIR_CANDLES_1MIN, DIR_CANDLES_1DAY # noqa
-from src.my_tinkoff.schemas import Candle, Candles
-from src.my_tinkoff.helpers import configure_datetime_from
-from src.my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
-from src.my_tinkoff.api_calls.market_data import get_candles
-from src.my_tinkoff.api_calls.instruments import get_shares
-from src.my_tinkoff.exceptions import (
+from my_tinkoff.schemas import Candle, Candles
+from my_tinkoff.helpers import configure_datetime_from
+from my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
+from my_tinkoff.api_calls.market_data import get_candles
+from my_tinkoff.api_calls.instruments import get_shares
+from my_tinkoff.exceptions import (
     IncorrectFirstCandle,
     UnexpectedCandleInterval,
     CSVCandlesNeedInsert,

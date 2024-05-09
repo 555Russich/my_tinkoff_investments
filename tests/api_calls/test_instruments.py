@@ -8,7 +8,7 @@ from tinkoff.invest import (
     TradingSchedule
 )
 
-from src.my_tinkoff.api_calls.instruments import (
+from my_tinkoff.api_calls.instruments import (
     get_shares,
     get_dividends,
     get_instrument_by,
@@ -17,8 +17,8 @@ from src.my_tinkoff.api_calls.instruments import (
     get_future_by,
     get_futures,
 )
-from src.my_tinkoff.schemas import Shares
-from src.my_tinkoff.date_utils import DateTimeFactory
+from my_tinkoff.schemas import Shares
+from my_tinkoff.date_utils import DateTimeFactory
 from tests.dataset import test_instruments, SBER
 
 
@@ -58,9 +58,12 @@ async def test_get_trading_schedules() -> None:
 
 
 async def test_find_instrument() -> None:
-    r = await find_instrument(query='SPM4', instrument_kind=InstrumentType.INSTRUMENT_TYPE_FUTURES)
-    for i in r:
-        print(i)
+    # r = await find_instrument(query='SPM4', instrument_kind=InstrumentType.INSTRUMENT_TYPE_FUTURES)
+    # for i in r:
+    #     print(i)
+
+    r = await find_instrument(query='POSI', instrument_kind=InstrumentType.INSTRUMENT_TYPE_SHARE)
+    print(r)
 
 
 async def test_get_future_by() -> None:

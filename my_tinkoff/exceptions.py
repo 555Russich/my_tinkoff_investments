@@ -1,9 +1,6 @@
 from datetime import datetime
 
-from tinkoff.invest import Instrument
-
-from src.my_tinkoff.schemas import Candles
-from src.my_tinkoff.date_utils import dt_form_sys
+from my_tinkoff.schemas import Candles
 
 
 class TinkoffAPIError(Exception):

@@ -14,8 +14,8 @@ from tinkoff.invest import (
 )
 from tinkoff.invest.exceptions import AioRequestError
 
-from src.my_tinkoff.token_manager import token_controller
-from src.my_tinkoff.schemas import Shares
+from my_tinkoff.token_manager import token_controller
+from my_tinkoff.schemas import Shares
 
 
 @token_controller()
