@@ -58,12 +58,13 @@ async def test_get_trading_schedules() -> None:
 
 
 async def test_find_instrument() -> None:
-    r = await find_instrument(query=SBER.ticker, instrument_kind=InstrumentType.INSTRUMENT_TYPE_SHARE)
-    print(r)
+    r = await find_instrument(query='SPM4', instrument_kind=InstrumentType.INSTRUMENT_TYPE_FUTURES)
+    for i in r:
+        print(i)
 
 
 async def test_get_future_by() -> None:
-    r = await get_future_by(id='SBER', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='TQBR')
+    r = await get_future_by(id='SPM4', id_type=InstrumentIdType.INSTRUMENT_ID_TYPE_TICKER, class_code='SPBFUT')
     print(r)
 
 
