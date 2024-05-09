@@ -134,7 +134,11 @@ def configure_datetime_from(from_: datetime, instrument: Instrument, interval: C
     except RequestedCandleOutOfRange as ex:
         logging.warning(f'ticker={instrument.ticker} from_={dt_form_sys.datetime_strf(from_)} < first_candle='
                         f'{dt_form_sys.datetime_strf(ex.dt_first_available_candle)}')
-        return ex.dt_first_available_candle
+
+        if interval == CandleInterval.CANDLE_INTERVAL_DAY:
+            return DateTimeFactory.replace_time(ex.dt_first_available_candle)
+        else:
+            return ex.dt_first_available_candle
 
 
 def check_first_candle_availability(instrument: Instrument, dt: datetime, interval: CandleInterval) -> datetime:
@@ -142,7 +146,6 @@ def check_first_candle_availability(instrument: Instrument, dt: datetime, interv
         if dt < instrument.first_1min_candle_date:
             raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1min_candle_date)
     elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
-        dt = DateTimeFactory.replace_time(dt)
         if dt < DateTimeFactory.replace_time(instrument.first_1day_candle_date):
             raise RequestedCandleOutOfRange(dt_first_available_candle=instrument.first_1day_candle_date)
     else:

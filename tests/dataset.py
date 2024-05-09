@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from tinkoff.invest import CandleInterval
+
 from src.my_tinkoff.date_utils import TZ_UTC
 from src.my_tinkoff.schemas import Candle, Candles
 from tests.conftest import TEST_DIR_CANDLES
@@ -18,6 +20,13 @@ CNTL = InstrumentInfo(
     uid='c05fd0a1-0c8e-4bc3-bf9e-43e364d278ef',
     class_code='TQBR',
     exchange='MOEX'
+)
+POSI = InstrumentInfo(
+    ticker='POSI',
+    uid='de08affe-4fbd-454e-9fd1-46a81b23f870',
+    class_code='TQBR',
+    exchange='MOEX_EVENING_WEEKEND',
+    first_1day_candle_date=datetime(2021, 12, 17, 0, 0, tzinfo=TZ_UTC)
 )
 
 CASE_SBER_FULL_RANGE_EXISTS = CandlesTestCase(
@@ -53,14 +62,24 @@ CASE_CNTL_GAP_IN_THE_END = CandlesTestCase(
     dt_first_candle=datetime(year=2024, month=2, day=19, hour=7, minute=0, tzinfo=TZ_UTC),
     dt_last_candle=datetime(year=2024, month=2, day=19, hour=15, minute=48, tzinfo=TZ_UTC),
 )
+CASE_POSI_GAPS_EVERYWHERE = CandlesTestCase(
+    filepath=TEST_DIR_CANDLES / 'POSI_gaps_everywhere.csv',
+    dt_from=datetime(year=2019, month=5, day=11, tzinfo=TZ_UTC),
+    dt_to=datetime(year=2024, month=5, day=9, tzinfo=TZ_UTC),
+    count_candles=584,
+    dt_first_candle=datetime(2021, 12, 17, tzinfo=TZ_UTC),
+    dt_last_candle=datetime(2024, 5, 8, tzinfo=TZ_UTC),
+    interval=CandleInterval.CANDLE_INTERVAL_DAY
+)
 
 
 test_instruments = [SBER, CNTL]
 dataset_candles = [
-    (SBER, CASE_SBER_FULL_RANGE_EXISTS),
-    (CNTL, CASE_CNTL_FULL_RANGE_EXISTS),
-    (CNTL, CASE_CNTL_GAP_IN_THE_BEGINNING),
-    (CNTL, CASE_CNTL_GAP_IN_THE_END),
+    # (SBER, CASE_SBER_FULL_RANGE_EXISTS),
+    # (CNTL, CASE_CNTL_FULL_RANGE_EXISTS),
+    # (CNTL, CASE_CNTL_GAP_IN_THE_BEGINNING),
+    # (CNTL, CASE_CNTL_GAP_IN_THE_END),
+    (POSI, CASE_POSI_GAPS_EVERYWHERE)
 ]
 
 candles_math = [

@@ -139,36 +139,41 @@ class CSVCandles:
 
         async with aiofiles.open(self.filepath, 'r') as f:
             data = await f.readlines()
-            columns = data[0].replace(NEW_LINE, '').split(DELIMITER)
-            data = data[1:]
 
-            for i, row in enumerate(data):
-                str_values = row.replace(NEW_LINE, '').split(DELIMITER)
-                values = []
+        columns = data[0].replace(NEW_LINE, '').split(DELIMITER)
+        data = data[1:]
 
-                for column, value in zip(columns, str_values):
-                    if column in ('open', 'high', 'low', 'close'):
-                        values.append(float(value))
-                    elif column == 'volume':
-                        values.append(int(value))
-                    elif column == 'time':
-                        values.append(datetime.fromisoformat(value))
+        for i, row in enumerate(data):
+            str_values = row.replace(NEW_LINE, '').split(DELIMITER)
+            values = []
 
-                candle = Candle(*values, is_complete=True)
-                if from_ <= candle.time <= to:
-                    candles.append(candle)
+            for column, value in zip(columns, str_values):
+                if column in ('open', 'high', 'low', 'close'):
+                    values.append(float(value))
+                elif column == 'volume':
+                    values.append(int(value))
+                elif column == 'time':
+                    values.append(datetime.fromisoformat(value))
 
-                if i == 0 and candle.time > from_:
-                    if not (interval == CandleInterval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date()):
-                        raise CSVCandlesNeedInsert(to_temp=candle.time)
-                if i == len(data) - 1 and candle.time < to:
-                    dt_delta = to - candle.time
-                    if candle.time.date() == to.date() and (
-                            interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or
-                            interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
-                            interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
-                    ):
-                        raise CSVCandlesNeedAppend(from_temp=candle.time, candles=candles)
+            candle = Candle(*values, is_complete=True)
+            if from_ <= candle.time <= to:
+                candles.append(candle)
+
+            if i == 0 and candle.time > from_:
+                if not (interval == CandleInterval.CANDLE_INTERVAL_DAY and candle.time.date() == from_.date()):
+                    raise CSVCandlesNeedInsert(to_temp=candle.time)
+            if i == len(data) - 1 and candle.time < to:
+                dt_delta = to - candle.time
+                if (
+                    (
+                        candle.time.date() == to.date() and
+                        interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or
+                        interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
+                        interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
+                        ) or
+                        (candle.time.date() < to.date() and interval == CandleInterval.CANDLE_INTERVAL_DAY)
+                ):
+                    raise CSVCandlesNeedAppend(from_temp=candle.time, candles=candles)
         return candles
 
     async def _append(self, candles: Candles) -> None:
