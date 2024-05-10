@@ -2,7 +2,7 @@ import pytest
 
 from tinkoff.invest import GetTradingStatusResponse
 
-from my_tinkoff import (
+from my_tinkoff.api_calls.market_data import (
     get_candles,
     get_trading_status
 )
