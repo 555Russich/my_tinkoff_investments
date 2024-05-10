@@ -62,7 +62,7 @@ class CSVCandles:
                 # 1st candle in response is last candle in file
                 candles = (await get_candles(instrument_id=instrument.uid, from_=ex.from_temp, to=to, interval=interval))[1:]
                 if candles:
-                    candles = candles if candles[-1].is_complete else candles[:1]
+                    candles = candles if candles[-1].is_complete else candles[:-1]
                     await csv._append(candles)
                 else:
                     to = ex.candles[-1].time if to > ex.candles[-1].time else to
