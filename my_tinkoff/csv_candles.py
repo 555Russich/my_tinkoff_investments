@@ -61,11 +61,12 @@ class CSVCandles:
                               f'{dt_form_sys.datetime_strf(ex.from_temp)} | to={dt_form_sys.datetime_strf(to)}')
                 # 1st candle in response is last candle in file
                 candles = (await get_candles(instrument_id=instrument.uid, from_=ex.from_temp, to=to, interval=interval))[1:]
-                if candles:
-                    candles = candles if candles[-1].is_complete else candles[:-1]
-                    await csv._append(candles)
-                else:
+
+                if not candles or (len(candles) == 1 and candles[0].is_complete is False):
                     to = ex.candles[-1].time if to > ex.candles[-1].time else to
+
+                candles = candles if candles[-1].is_complete else candles[:-1]
+                await csv._append(candles)
             except CSVCandlesNeedInsert as ex:
                 logging.debug(f'Need insert | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} |'
                               f' from={dt_form_sys.datetime_strf(from_)} | '
@@ -76,7 +77,7 @@ class CSVCandles:
                 candles = await get_candles(instrument_id=instrument.uid, from_=from_, to=ex.to_temp, interval=interval)
                 # 1st candle in file is last candle in get_candles response
                 candles = candles[:-1]
-                
+
                 if candles:
                     await csv._insert(candles[:-1])
                 else:
@@ -165,11 +166,11 @@ class CSVCandles:
             if i == len(data) - 1 and candle.time < to:
                 dt_delta = to - candle.time
                 if (
-                    (
-                        candle.time.date() == to.date() and
-                        interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or
-                        interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
-                        interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
+                        (
+                                candle.time.date() == to.date() and
+                                interval == CandleInterval.CANDLE_INTERVAL_1_MIN and dt_delta > timedelta(minutes=1+1) or
+                                interval == CandleInterval.CANDLE_INTERVAL_5_MIN and dt_delta > timedelta(minutes=5+1) or
+                                interval == CandleInterval.CANDLE_INTERVAL_HOUR and dt_delta > timedelta(minutes=60+1)
                         ) or
                         (candle.time.date() < to.date() and interval == CandleInterval.CANDLE_INTERVAL_DAY)
                 ):
