@@ -66,7 +66,7 @@ CASE_POSI_GAPS_EVERYWHERE = CandlesTestCase(
     filepath=TEST_DIR_CANDLES / 'POSI_gaps_everywhere.csv',
     dt_from=datetime(year=2019, month=5, day=11, tzinfo=TZ_UTC),
     dt_to=datetime(year=2024, month=5, day=9, tzinfo=TZ_UTC),
-    count_candles=584,
+    count_candles=585,
     dt_first_candle=datetime(2021, 12, 17, tzinfo=TZ_UTC),
     dt_last_candle=datetime(2024, 5, 8, tzinfo=TZ_UTC),
     interval=CandleInterval.CANDLE_INTERVAL_DAY
@@ -75,10 +75,10 @@ CASE_POSI_GAPS_EVERYWHERE = CandlesTestCase(
 
 test_instruments = [SBER, CNTL]
 dataset_candles = [
-    # (SBER, CASE_SBER_FULL_RANGE_EXISTS),
-    # (CNTL, CASE_CNTL_FULL_RANGE_EXISTS),
-    # (CNTL, CASE_CNTL_GAP_IN_THE_BEGINNING),
-    # (CNTL, CASE_CNTL_GAP_IN_THE_END),
+    (SBER, CASE_SBER_FULL_RANGE_EXISTS),
+    (CNTL, CASE_CNTL_FULL_RANGE_EXISTS),
+    (CNTL, CASE_CNTL_GAP_IN_THE_BEGINNING),
+    (CNTL, CASE_CNTL_GAP_IN_THE_END),
     (POSI, CASE_POSI_GAPS_EVERYWHERE)
 ]
 
