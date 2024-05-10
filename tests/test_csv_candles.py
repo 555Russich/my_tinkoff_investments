@@ -23,8 +23,8 @@ async def test_download_or_read(instrument, case):
         raw_candles = await f.read()
 
     try:
-        candles = await CSVCandles.download_or_read(instrument=instrument, from_=case.dt_from,
-                                                    to=case.dt_to, interval=case.interval)
+        candles = await CSVCandles.download_or_read(
+            instrument=instrument, from_=case.dt_from, to=case.dt_to, interval=case.interval)
         assert len(candles) == case.count_candles
         assert candles[0].time == case.dt_first_candle
         assert candles[-1].time == case.dt_last_candle
