@@ -65,8 +65,9 @@ class CSVCandles:
                 if not candles or (len(candles) == 1 and candles[0].is_complete is False):
                     to = ex.candles[-1].time if to > ex.candles[-1].time else to
 
-                candles = candles if candles[-1].is_complete else candles[:-1]
-                await csv._append(candles)
+                if candles:
+                    candles = candles if candles[-1].is_complete else candles[:-1]
+                    await csv._append(candles)
             except CSVCandlesNeedInsert as ex:
                 logging.debug(f'Need insert | {retry=} | ticker={instrument.ticker} | uid={instrument.uid} |'
                               f' from={dt_form_sys.datetime_strf(from_)} | '
