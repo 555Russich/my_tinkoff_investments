@@ -11,7 +11,8 @@ TZ_UTC = ZoneInfo('UTC')
 ru_holidays = holidays.country_holidays('RU', years=([x for x in range(1970, datetime.now().year+5)]))
 ru_holidays = [
     dt for dt in ru_holidays
-    if not (dt.month == 1 and dt.day in [3, 4, 5, 6, 7, 8])
+    if not (dt.month == 1 and dt.day in [3, 4, 5, 6, 7, 8]) and
+       dt not in [datetime(2023, 5, 8).date()]
 ]
 
 
@@ -86,5 +87,3 @@ dt_form_msc._TZ = TZ_MOSCOW
 def is_minute_passed(old_dt: datetime) -> bool:
     dt_now = DateTimeFactory.now()
     return dt_now - old_dt > timedelta(minutes=1) or dt_now.minute != old_dt.minute
-
-
