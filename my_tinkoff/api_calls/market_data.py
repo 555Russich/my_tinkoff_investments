@@ -40,6 +40,8 @@ async def get_candles(
                 instrument_id=instrument_id, interval=interval,
                 from_=from_, to=to_temp
             )
+            if candles and r.candles and r.candles[0].time == candles[-1].time:
+                r.candles = r.candles[1:]
             candles += [convert_candle(candle) for candle in r.candles if candle.time <= to_temp]
         except AioRequestError as ex:
             if ex.code == StatusCode.RESOURCE_EXHAUSTED:
