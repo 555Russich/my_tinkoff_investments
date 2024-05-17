@@ -10,13 +10,11 @@ from tinkoff.invest import (
     HistoricCandle,
     MoneyValue,
 )
+from trading_helpers.exceptions import UnexpectedCandleInterval
 
 from my_tinkoff.date_utils import DateTimeFactory, dt_form_sys
 from my_tinkoff.schemas import Candle
-from my_tinkoff.exceptions import (
-    UnexpectedCandleInterval,
-    RequestedCandleOutOfRange
-)
+from my_tinkoff.exceptions import RequestedCandleOutOfRange
 
 
 async def configure_datetime_range(
@@ -66,11 +64,11 @@ async def configure_datetime_range(
             break
 
         for candle in candles:
-            if candle.time.date() == from_.date():
+            if candle.dt.date() == from_.date():
                 is_from_defined = True
                 break
-            if candle.time.date() < from_.date():
-                closest_day_early = candle.time
+            if candle.dt.date() < from_.date():
+                closest_day_early = candle.dt
         else:
             if closest_day_early:
                 from_ = closest_day_early.replace(hour=from_.hour, minute=from_.minute,
@@ -99,13 +97,13 @@ async def configure_datetime_range(
             break
 
         for candle in candles:
-            if candle.time.date() == to.date():
+            if candle.dt.date() == to.date():
                 is_to_defined = True
                 break
-            elif candle.time.date() > to.date() and not closest_day_later:
-                closest_day_later = candle.time
-            elif candle.time.date() < to.date():
-                closest_day_early = candle.time
+            elif candle.dt.date() > to.date() and not closest_day_later:
+                closest_day_later = candle.dt
+            elif candle.dt.date() < to.date():
+                closest_day_early = candle.dt
         else:
             if closest_day_later:
                 to = closest_day_later.replace(hour=to.hour, minute=to.minute,
@@ -169,13 +167,13 @@ def moneyvalue2quotation(v: MoneyValue) -> Quotation:
 
 def convert_candle(candle: HistoricCandle) -> Candle:
     return Candle(
-        quotation2decimal(candle.open),
-        quotation2decimal(candle.high),
-        quotation2decimal(candle.low),
-        quotation2decimal(candle.close),
-        candle.volume,
-        candle.time,
-        candle.is_complete
+        open=quotation2decimal(candle.open),
+        high=quotation2decimal(candle.high),
+        low=quotation2decimal(candle.low),
+        close=quotation2decimal(candle.close),
+        volume=candle.volume,
+        dt=candle.time,
+        is_complete=candle.is_complete
     )
 
 

@@ -16,8 +16,8 @@ async def test_get_candles(instrument, case) -> None:
     assert isinstance(r, Candles)
     assert isinstance(r[0], Candle)
     assert len(r) == case.count_candles
-    assert r[0].time == case.dt_first_candle
-    assert r[-1].time == case.dt_last_candle
+    assert r[0].dt == case.dt_first_candle
+    assert r[-1].dt == case.dt_last_candle
 
 
 async def test_get_trading_status() -> None:

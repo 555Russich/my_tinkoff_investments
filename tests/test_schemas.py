@@ -11,7 +11,7 @@ def test_candle_add():
     assert round(c.low, 2) == 518.8
     assert round(c.close, 2) == 524.03
     assert c.volume == 92761000
-    assert c.time == c1.time
+    assert c.dt == c1.dt
 
 
 def test_candle_multiply():
@@ -22,7 +22,7 @@ def test_candle_multiply():
     assert round(c.low, 2) == 67010.8
     assert round(c.close, 2) == 68373.47
     assert c.volume == 92761000
-    assert c.time == c1.time
+    assert c.dt == c1.dt
 
 
 def test_candle_sub():
@@ -33,7 +33,7 @@ def test_candle_sub():
     assert round(c.low, 2) == 33.32
     assert round(c.close, 2) == 33.37
     assert c.volume == 92761000
-    assert c.time == c1.time
+    assert c.dt == c1.dt
 
 
 def test_candle_division():
@@ -44,7 +44,7 @@ def test_candle_division():
     assert round(c.low, 2) == 1.14
     assert round(c.close, 2) == 1.14
     assert c.volume == 92761000
-    assert c.time == c1.time
+    assert c.dt == c1.dt
 
 
 @pytest.mark.parametrize("candles_1,candles_2,results", candles_math)
@@ -60,4 +60,4 @@ def test_candle_add(candles_1, candles_2, results):
             assert round(c_v.high, 2) == round(c_e.high, 2)
             assert round(c_v.low, 2) == round(c_e.low, 2)
             assert c_v.volume == c_e.volume
-            assert c_v.time == c_e.time
+            assert c_v.dt == c_e.dt
