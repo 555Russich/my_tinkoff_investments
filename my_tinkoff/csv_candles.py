@@ -13,9 +13,8 @@ from trading_helpers.schemas import AnyCandle, CandleInterval
 
 from my_tinkoff.schemas import Candle, Candles
 from my_tinkoff.helpers import configure_datetime_from
-from my_tinkoff.date_utils import dt_form_sys, DateTimeFactory
+from my_tinkoff.date_utils import dt_form_sys
 from my_tinkoff.api_calls.market_data import get_candles
-from my_tinkoff.api_calls.instruments import get_shares
 
 from trading_helpers.csv_candles import _CSVCandles, Interval
 from trading_helpers.exceptions import (
@@ -35,8 +34,11 @@ class CSVCandles(_CSVCandles):
         'low': float,
         'close': float,
         'volume': int,
-        'time': datetime.fromisoformat
+        'dt': datetime.fromisoformat
     }
+
+    DIR_API = DIR_CANDLES / 'tinkoff'
+    DIR_API.mkdir(exist_ok=True)
 
     @classmethod
     async def download_or_read(
@@ -48,7 +50,6 @@ class CSVCandles(_CSVCandles):
     ) -> Candles:
         candles = None
         from_ = configure_datetime_from(from_=from_, instrument=instrument, interval=interval)
-
         csv = cls(instrument_id=instrument.uid, interval=interval)
 
         if not csv.filepath.exists():
@@ -94,10 +95,6 @@ class CSVCandles(_CSVCandles):
                 logging.error(f'{retry=} | {csv.filepath} | {instrument.ticker=}\n{ex}', exc_info=True)
                 raise ex
 
-    @property
-    def filepath(self) -> Path:
-        return (DIR_CANDLES / 'tinkoff' / self.interval / self.instrument_id).with_suffix('.csv')
-
     @classmethod
     def row2candle(cls, row: list[float | int | datetime]) -> AnyCandle:
         row.append(True)  # is_complete=True
@@ -135,39 +132,3 @@ class CSVCandles(_CSVCandles):
             case _:
                 raise UnexpectedCandleInterval(str(interval))
         return i
-
-    @classmethod
-    async def get_all_instruments_histories_by_type(
-            cls,
-            instruments_type: InstrumentType,
-            interval: CandleInterval
-    ) -> None:
-        match instruments_type:
-            case InstrumentType.INSTRUMENT_TYPE_SHARE:
-                instruments = await get_shares()
-            case _:
-                raise NotImplementedError
-
-        for i, instrument in enumerate(instruments):
-            if instrument.figi in ['TCS00A106YF0']:
-                logging.debug(f'Skipped {instrument.ticker=} | {instrument.uid=}')
-                continue
-            try:
-                candles = await cls.get_all_instrument_history(instrument=instrument, interval=interval)
-                logging.debug(f'{i}/{len(instruments)} | {instrument.uid=} downloaded | {len(candles)=} | {interval=}')
-            except IncorrectFirstCandle as e:
-                logging.warning(e, exc_info=True)
-
-    @classmethod
-    async def get_all_instrument_history(cls, instrument: Instrument, interval: CandleInterval) -> Candles:
-        """ First time downloading history """
-
-        if interval == CandleInterval.CANDLE_INTERVAL_1_MIN:
-            from_ = instrument.first_1min_candle_date
-        elif interval == CandleInterval.CANDLE_INTERVAL_DAY:
-            from_ = instrument.first_1day_candle_date
-        else:
-            raise Exception(f'Unexpected {interval=} for downloading history')
-
-        return await CSVCandles.download_or_read(
-            instrument=instrument, from_=from_, to=DateTimeFactory.now(), interval=interval)
