@@ -11,7 +11,8 @@ dependencies = [
     'python-dotenv',
     'tzdata',
     'aiofiles',
-    'holidays'
+    'holidays',
+    'https://github.com/555Russich/trading_helpers'
 ]
 description = 'Wrapper package for tinkoff-investments'
 
