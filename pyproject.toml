@@ -12,7 +12,7 @@ dependencies = [
     'tzdata',
     'aiofiles',
     'holidays',
-    'https://github.com/555Russich/trading_helpers'
+    'trading_helpers @ git@github.com/555Russich/trading_helpers'
 ]
 description = 'Wrapper package for tinkoff-investments'
 
